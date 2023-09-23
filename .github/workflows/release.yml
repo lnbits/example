@@ -44,10 +44,16 @@ jobs:
           cd lnbits-extensions
           git checkout -b $branch
 
+          # if there is another open PR
+          git pull origin $branch || echo "branch does not exist"
+
           sh util.sh update_extension $repo_name $tag
 
           git add -A
           git commit -am "$title"
           git push origin $branch
 
-          gh pr create --title "$title" --body "$body" --repo lnbits/lnbits-extensions
+          # check if pr exists before creating it
+          gh config set pager cat
+          check=$(gh pr list -H $branch | wc -l)
+          test $check -ne 0 || gh pr create --title "$title" --body "$body" --repo lnbits/lnbits-extensions
