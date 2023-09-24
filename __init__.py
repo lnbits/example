@@ -29,6 +29,6 @@ from .views import *  # noqa: F401,F403
 from .views_api import *  # noqa: F401,F403
 
 
-def tpos_start():
+def example_start():
     loop = asyncio.get_event_loop()
     loop.create_task(catch_everything_and_restart(wait_for_paid_invoices))
