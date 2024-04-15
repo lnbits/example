@@ -2,30 +2,29 @@ name: prepare
 
 inputs:
   python-version:
-    description: "Python Version"
+    description: 'Python Version'
     required: true
-    default: "3.9"
+    default: '3.9'
   poetry-version:
-    description: "Poetry Version"
-    default: "1.7.0"
+    description: 'Poetry Version'
+    default: '1.7.0'
   node-version:
-    description: "Node Version"
-    default: "20.x"
+    description: 'Node Version'
+    default: '20.x'
   npm:
-    description: "use npm"
+    description: 'use npm'
     default: false
     type: boolean
 
-
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
         # cache poetry install via pip
-        cache: "pip"
+        cache: 'pip'
 
     - name: Set up Poetry ${{ inputs.poetry-version }}
       uses: abatilo/actions-poetry@v2
@@ -65,4 +64,3 @@ runs:
       if: ${{ (inputs.npm == 'true') }}
       shell: bash
       run: npm install
-
