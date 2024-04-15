@@ -34,5 +34,5 @@ def example_stop():
 
 
 def example_start():
-    task = create_permanent_unique_task("ext_example", wait_for_paid_invoices)
+    task = create_permanent_unique_task("ext_example", wait_for_paid_invoices())
     scheduled_tasks.append(task)

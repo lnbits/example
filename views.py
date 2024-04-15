@@ -6,6 +6,7 @@ from starlette.responses import HTMLResponse
 
 example_ext_generic = APIRouter()
 
+
 @example_ext_generic.get("/", response_class=HTMLResponse)
 async def index(
     request: Request,

@@ -10,7 +10,7 @@ pyright:
 	poetry run ./node_modules/.bin/pyright
 
 mypy:
-	poetry run mypy
+	poetry run mypy .
 
 black:
 	poetry run black .
