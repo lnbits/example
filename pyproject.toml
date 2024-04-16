@@ -6,7 +6,7 @@ authors = ["Alan Bits <alan@lnbits.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10 | ^3.9"
-lnbits = "^0.12.6"
+lnbits = "*"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
@@ -52,7 +52,8 @@ line-length = 88
 # C - mccabe
 # N - naming
 # UP - pyupgrade
-select = ["F", "E", "W", "I", "A", "C", "N", "UP"]
+# RUF - ruff
+select = ["F", "E", "W", "I", "A", "C", "N", "UP", "RUF"]
 # UP007: pyupgrade: use X | Y instead of Optional. (python3.10)
 ignore = ["UP007"]
 
@@ -73,5 +74,5 @@ classmethod-decorators = [
 # [tool.ruff.lint.extend-per-file-ignores]
 # "__init__.py" = ["F401", "F403"]
 
-[tool.ruff.lint.mccabe]
-max-complexity = 10
+# [tool.ruff.lint.mccabe]
+# max-complexity = 10
