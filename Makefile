@@ -41,3 +41,7 @@ install-pre-commit-hook:
 
 pre-commit:
 	poetry run pre-commit run --all-files
+
+
+checkbundle:
+	@echo "skipping checkbundle"
