@@ -4,10 +4,12 @@ from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
 
-example_ext_generic = APIRouter()
+example_ext_generic = APIRouter(tags=["example"])
 
 
-@example_ext_generic.get("/", response_class=HTMLResponse)
+@example_ext_generic.get(
+    "/", description="Example generic endpoint", response_class=HTMLResponse
+)
 async def index(
     request: Request,
     user: User = Depends(check_user_exists),
