@@ -1,5 +1,6 @@
-# from pydantic import BaseModel
+from pydantic import BaseModel
 
-# class Example(BaseModel):
-#    id: str
-#    wallet: str
+
+class Example(BaseModel):
+   id: str
+   wallet: str

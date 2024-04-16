@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import HTMLResponse
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
-from starlette.responses import HTMLResponse
 
 example_ext_generic = APIRouter()
 
@@ -13,5 +13,5 @@ async def index(
     user: User = Depends(check_user_exists),
 ):
     return template_renderer(["example/templates"]).TemplateResponse(
-        "example/index.html", {"request": request, "user": user.dict()}
+        request, "example/index.html", {"user": user.dict()}
     )

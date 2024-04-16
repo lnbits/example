@@ -25,6 +25,7 @@ module = [
   "lnbits.*",
   "loguru.*",
   "fastapi.*",
+  "pydantic.*",
 ]
 ignore_missing_imports = "True"
 
