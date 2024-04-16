@@ -1,5 +1,4 @@
 import asyncio
-from typing import Collection
 
 from fastapi import APIRouter
 from lnbits.db import Database
@@ -37,5 +36,5 @@ def example_stop():
 def example_start():
     # ignore will be removed in lnbits `0.12.6`
     # https://github.com/lnbits/lnbits/pull/2417
-    task = create_permanent_unique_task("ext_testing", wait_for_paid_invoices) # type: ignore
+    task = create_permanent_unique_task("ext_testing", wait_for_paid_invoices)  # type: ignore
     scheduled_tasks.append(task)
