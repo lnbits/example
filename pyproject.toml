@@ -53,7 +53,8 @@ line-length = 88
 # N - naming
 # UP - pyupgrade
 # RUF - ruff
-select = ["F", "E", "W", "I", "A", "C", "N", "UP", "RUF"]
+# B - bugbear
+select = ["F", "E", "W", "I", "A", "C", "N", "UP", "RUF", "B"]
 # UP007: pyupgrade: use X | Y instead of Optional. (python3.10)
 ignore = ["UP007"]
 
@@ -76,3 +77,10 @@ classmethod-decorators = [
 
 # [tool.ruff.lint.mccabe]
 # max-complexity = 10
+
+[tool.ruff.lint.flake8-bugbear]
+# Allow default arguments like, e.g., `data: List[str] = fastapi.Query(None)`.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+]
