@@ -1,20 +1,19 @@
-from fastapi import Depends, Request
-from fastapi.templating import Jinja2Templates
-from starlette.responses import HTMLResponse
-
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import HTMLResponse
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
+from lnbits.helpers import template_renderer
 
-from . import example_ext, example_renderer
-
-templates = Jinja2Templates(directory="templates")
+example_ext_generic = APIRouter(tags=["example"])
 
 
-@example_ext.get("/", response_class=HTMLResponse)
+@example_ext_generic.get(
+    "/", description="Example generic endpoint", response_class=HTMLResponse
+)
 async def index(
     request: Request,
     user: User = Depends(check_user_exists),
 ):
-    return example_renderer().TemplateResponse(
-        "example/index.html", {"request": request, "user": user.dict()}
+    return template_renderer(["example/templates"]).TemplateResponse(
+        request, "example/index.html", {"user": user.dict()}
     )

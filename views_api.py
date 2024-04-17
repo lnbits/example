@@ -1,13 +1,16 @@
+from fastapi import APIRouter
+
+from .models import Example
+
 # views_api.py is for you API endpoints that could be hit by another service
 
-# add your dependencies here
+example_ext_api = APIRouter(
+    prefix="/api/v1",
+    tags=["example"],
+)
 
-from . import example_ext
 
-# add your endpoints here
-
-
-@example_ext.get("/api/v1/test/{test_data}")
-async def api_example(test_data):
+@example_ext_api.get("/{example_data}", description="Example API endpoint")
+async def api_example(example_data: str) -> Example:
     # Do some python things and return the data
-    return test_data
+    return Example(id="1", wallet=example_data)
