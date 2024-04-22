@@ -11,6 +11,7 @@ async def test_router():
     router.include_router(example_ext)
     assert 1 == 1
 
+
 @pytest.mark.asyncio
 async def test_start_and_stop():
     example_start()
