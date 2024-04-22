@@ -2,7 +2,6 @@ import asyncio
 
 from fastapi import APIRouter
 from lnbits.db import Database
-from lnbits.tasks import create_permanent_unique_task
 from loguru import logger
 
 from .tasks import wait_for_paid_invoices
@@ -34,7 +33,8 @@ def example_stop():
 
 
 def example_start():
-    # ignore will be removed in lnbits `0.12.6`
+    # ignore will be removed in lnbits `0.12.7`
     # https://github.com/lnbits/lnbits/pull/2417
+    from lnbits.tasks import create_permanent_unique_task
     task = create_permanent_unique_task("ext_testing", wait_for_paid_invoices)  # type: ignore
     scheduled_tasks.append(task)

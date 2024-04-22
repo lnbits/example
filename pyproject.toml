@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "lnbits-example"
+name = "example"
 version = "0.0.0"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
 authors = ["Alan Bits <alan@lnbits.com>"]
