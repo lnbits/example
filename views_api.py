@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
-from loguru import logger
-from .models import Example
 from http import HTTPStatus
+
 import httpx
+from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
-from lnbits.decorators import get_key_type, WalletTypeInfo
+from lnbits.decorators import WalletTypeInfo, get_key_type
+
+from .models import Example
 
 # views_api.py is for you API endpoints that could be hit by another service
 
