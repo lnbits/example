@@ -358,8 +358,8 @@
         </q-tab-panel>
 
         <q-tab-panel name="submission">
-          <div class="text-h6">Submission</div>
-          Coming soon...
+          <div class="text-h6"> Submission <a href="https://github.com/lnbits/lnbits-extensions?tab=readme-ov-file#lnbits-vetted-extensions">(fetched from https://github.com/lnbits/lnbits-extensions)</a></div>
+          <div v-html="vettedData"></div>
         </q-tab-panel>
       </q-tab-panels>
     </q-card>
@@ -394,7 +394,8 @@
         exampleData: [],
         tab: 'frameworks',
         framworktab: 'fastapi',
-        usefultab: 'magicalg'
+        usefultab: 'magicalg',
+        vettedData: ''
       }
     },
     ///// Where functions live /////
@@ -412,6 +413,20 @@
           })
           .catch(error => {
             LNbits.utils.notifyApiError(error) // Error will be passed to the frontend
+          })
+      },
+      getVettedReadme: function () { // This is a function that gets the vetted readme from the LNbits repo and converts it from makrdown to html.
+        LNbits.api
+          .request(
+            'GET', 
+            '/example/api/v1/vetted', 
+            this.g.user.wallets[0].inkey
+          )
+          .then(response => {
+             this.vettedData = LNbits.utils.convertMarkdown(response.data)
+          })
+          .catch(error => {
+            LNbits.utils.notifyApiError(error)
           })
       },
       initWs: async function () {
@@ -445,6 +460,7 @@
       self = this // Often used to run a real object, rather than the event (all a bit confusing really)
       self.exampleFunction('lorum')
       self.initWs()
+      self.getVettedReadme()
     }
   })
 </script>
