@@ -5,6 +5,7 @@ from http import HTTPStatus
 import httpx
 from fastapi.exceptions import HTTPException
 from lnbits.decorators import get_key_type, WalletTypeInfo
+
 # views_api.py is for you API endpoints that could be hit by another service
 
 example_ext_api = APIRouter(
@@ -18,10 +19,9 @@ async def api_example(example_data: str) -> Example:
     # Do some python things and return the data
     return Example(id="1", wallet=example_data)
 
+
 @example_ext_api.get("/vetted", description="Get the vetted extension readme")
-async def api_get_vetted(
-    wallet: WalletTypeInfo = Depends(get_key_type)
-):
+async def api_get_vetted(wallet: WalletTypeInfo = Depends(get_key_type)):
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
@@ -32,4 +32,3 @@ async def api_get_vetted(
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(e)
         ) from e
-
