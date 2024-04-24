@@ -1,7 +1,7 @@
 {
   "name": "Build your own!",
   "short_description": "Extension building guide",
-  "tile": "/example/static/bitcoin-extension.png",
+  "tile": "https://raw.githubusercontent.com/lnbits/example/main/static/bitcoin-extension.png",
   "min_lnbits_version": "0.12.6",
   "donate": "donate@legend.lnbits.com",
   "contributors": [
@@ -18,13 +18,13 @@
   ],
   "images": [
     {
-      "uri": "/example/static/1.png"
+      "uri": "https://raw.githubusercontent.com/lnbits/example/main/static/1.png"
     },
     {
-      "uri": "/example/static/2.png"
+      "uri": "https://raw.githubusercontent.com/lnbits/example/main/static/2.png"
     },
     {
-      "uri": "/example/static/3.png"
+      "uri": "https://raw.githubusercontent.com/lnbits/example/main/static/3.png"
     }
   ],
   "description_md": "https://raw.githubusercontent.com/lnbits/example/main/README.md",
