@@ -34,5 +34,6 @@ def example_stop():
 
 def example_start():
     from lnbits.tasks import create_permanent_unique_task
+
     task = create_permanent_unique_task("ext_testing", wait_for_paid_invoices)
     scheduled_tasks.append(task)
