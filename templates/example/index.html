@@ -1,6 +1,8 @@
 {% extends "base.html" %} {% from "macros.jinja" import window_vars with context
-%} {% block page %}
-
+%} {% block scripts %} {{ window_vars(user) }}
+<script src="{{ static_url_for('example/static', path='js/index.js') }}"></script>
+<!-- Do not remove. Test install extension version: 2 -->
+{% endblock %} {% block page %}
 <q-dialog v-model="thingDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
     <q-form @submit="sendThingDialog" class="q-gutter-md">
@@ -371,105 +373,4 @@
     </q-card>
   </q-card-section>
 </q-card>
-{% endblock %} {% block scripts %} {{ window_vars(user) }}
-
-<script>
-  var someMapObject = obj => {
-    obj._data = _.clone(obj)
-    obj.date = Quasar.utils.date.formatDate(
-      new Date(obj.time * 1000),
-      'YYYY-MM-DD HH:mm'
-    )
-    // here you can do something with the mapped data
-    return obj
-  }
-  new Vue({
-    el: '#vue',
-    mixins: [windowMixin],
-    data: function () {
-      return {
-        ///// Declare models/variables /////
-        protocol: window.location.protocol,
-        location: '//' + window.location.hostname,
-        thingDialog: {
-          show: false,
-          data: {}
-        },
-        someBool: true,
-        splitterModel: 20,
-        exampleData: [],
-        tab: 'frameworks',
-        framworktab: 'fastapi',
-        usefultab: 'magicalg',
-        vettedData: ''
-      }
-    },
-    ///// Where functions live /////
-    methods: {
-      exampleFunction: function (data) {
-        var theData = data
-        LNbits.api
-          .request(
-            'GET', // Type of request
-            '/example/api/v1/test/' + theData, // URL of the endpoint
-            this.g.user.wallets[0].inkey // Often endpoints require a key
-          )
-          .then(response => {
-            this.exampleData = response.data.map(someMapObject) // Often whats returned is mapped onto some model
-          })
-          .catch(error => {
-            LNbits.utils.notifyApiError(error) // Error will be passed to the frontend
-          })
-      },
-      getVettedReadme: function () {
-        // This is a function that gets the vetted readme from the LNbits repo and converts it from makrdown to html.
-        LNbits.api
-          .request(
-            'GET',
-            '/example/api/v1/vetted',
-            this.g.user.wallets[0].inkey
-          )
-          .then(response => {
-            this.vettedData = LNbits.utils.convertMarkdown(response.data)
-          })
-          .catch(error => {
-            LNbits.utils.notifyApiError(error)
-          })
-      },
-      initWs: async function () {
-        if (location.protocol !== 'http:') {
-          localUrl =
-            'wss://' +
-            document.domain +
-            ':' +
-            location.port +
-            '/api/v1/ws/32872r23g29'
-        } else {
-          localUrl =
-            'ws://' +
-            document.domain +
-            ':' +
-            location.port +
-            '/api/v1/ws/32872r23g29'
-        }
-        this.ws = new WebSocket(localUrl)
-        this.ws.addEventListener('message', async ({data}) => {
-          const res = data.toString()
-          document.getElementById('text-to-change').innerHTML = res
-        })
-      },
-      sendThingDialog() {
-        console.log(this.thingDialog)
-      }
-    },
-    ///// To run on startup /////
-    created: function () {
-      self = this // Often used to run a real object, rather than the event (all a bit confusing really)
-      self.exampleFunction('lorum')
-      self.initWs()
-      self.getVettedReadme()
-    }
-  })
-</script>
-<!-- Do not remove. Test install extension version: 2 -->
 {% endblock %}

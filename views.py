@@ -15,5 +15,5 @@ async def index(
     user: User = Depends(check_user_exists),
 ):
     return template_renderer(["example/templates"]).TemplateResponse(
-        request, "example/index.html", {"user": user.dict()}
+        request, "example/index.html", {"user": user.json()}
     )
