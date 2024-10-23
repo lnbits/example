@@ -1,6 +1,5 @@
-const someMapObject = obj => {
-  obj._data = _.clone(obj)
-  obj.date = Quasar.date.formatDate(new Date(obj.time), 'YYYY-MM-DD HH:mm')
+const mapObject = obj => {
+  // obj.date = Quasar.date.formatDate(new Date(obj.time), 'YYYY-MM-DD HH:mm')
   // here you can do something with the mapped data
   return obj
 }
@@ -32,12 +31,12 @@ window.app = Vue.createApp({
       LNbits.api
         .request(
           'GET', // Type of request
-          '/example/api/v1/test/', // URL of the endpoint
+          '/example/api/v1/test/00000000', // URL of the endpoint
           this.g.user.wallets[0].inkey, // Often endpoints require a key
           data
         )
         .then(response => {
-          this.exampleData = response.data.map(someMapObject) // Often whats returned is mapped onto some model
+          this.exampleData = response.data.map(mapObject) // Often whats returned is mapped onto some model
         })
         // Error will be passed to the frontend
         .catch(LNbits.utils.notifyApiError)
