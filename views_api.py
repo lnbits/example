@@ -15,14 +15,14 @@ example_ext_api = APIRouter(
 
 
 @example_ext_api.get("/test/{example_data}", description="Example API endpoint")
-async def api_example(example_data: str) -> list[Example]:
+async def api_example(example_data: str) -> Example:
     if example_data != "00000000":
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Invalid example data",
         )
     # Do some python things and return the data
-    return [Example(id="1", wallet=example_data), Example(id="2", wallet=example_data)]
+    return Example(id="1", wallet=example_data)
 
 
 @example_ext_api.get(
