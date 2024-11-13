@@ -22,7 +22,7 @@ async def api_example(example_data: str) -> Example:
             detail="Invalid example data",
         )
     # Do some python things and return the data
-    return Example(id="1", wallet=example_data)
+    return Example(id="2", wallet=example_data)
 
 
 @example_ext_api.get(
