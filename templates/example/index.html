@@ -76,6 +76,7 @@
       >
         <q-tab name="frameworks" label="Frameworks"></q-tab>
         <q-tab name="tools" label="Useful Tools"></q-tab>
+        <q-tab name="links" label="Useful Links"></q-tab>
         <q-tab name="goodpractice" v-if="false" label="Good Practice"></q-tab>
         <q-tab name="enviroment" v-if="false" label="Dev Enviroment"></q-tab>
         <q-tab
@@ -347,6 +348,71 @@
               {% endraw %}
             </q-tab-panels>
           </div>
+        </q-tab-panel>
+        <q-tab-panel name="links">
+          <div class="text-h6">Useful links</div>
+          <q-list bordered separator>
+            <q-item
+              clickable
+              tag="a"
+              href="https://github.com/lnbits"
+              target="_blank"
+            >
+              <q-item-section avatar>
+                <q-icon name="code" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-bold"
+                  >LNbits GitHub Repository</q-item-label
+                >
+                <q-item-label caption>
+                  Includes the LNbits repo and other useful repositories like
+                  <strong>lnbits-extensions</strong> for submitting extensions
+                  and many LNbits-related projects.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              tag="a"
+              href="https://www.youtube.com/channel/UCGXU2Ae5x5K-5aKdmKqoLYg"
+              target="_blank"
+            >
+              <q-item-section avatar>
+                <q-icon name="ondemand_video" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-bold"
+                  >LNbits YouTube Channel</q-item-label
+                >
+                <q-item-label caption>
+                  Features useful tutorials and updates, including how to build
+                  your own extension.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              tag="a"
+              href="https://www.youtube.com/@makerbits7700"
+              target="_blank"
+            >
+              <q-item-section avatar>
+                <q-icon name="build" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-bold"
+                  >Makerbits YouTube Channel</q-item-label
+                >
+                <q-item-label caption>
+                  Offers great hardware tutorials for projects that integrate
+                  with LNbits.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-tab-panel>
 
         <q-tab-panel v-if="false" name="goodpractice">
