@@ -6,15 +6,12 @@ from lnbits.decorators import require_invoice_key
 
 from .models import Example
 
+example_ext_api = APIRouter()
+
 # views_api.py is for you API endpoints that could be hit by another service
 
-example_ext_api = APIRouter(
-    prefix="/api/v1",
-    tags=["example"],
-)
 
-
-@example_ext_api.get("/test/{example_data}", description="Example API endpoint")
+@example_ext_api.get("/api/v1/test/{example_data}", description="Example API endpoint")
 async def api_example(example_data: str) -> Example:
     if example_data != "00000000":
         raise HTTPException(
@@ -26,7 +23,7 @@ async def api_example(example_data: str) -> Example:
 
 
 @example_ext_api.get(
-    "/vetted",
+    "/api/v1/vetted",
     description="Get the vetted extension readme",
     dependencies=[Depends(require_invoice_key)],
 )

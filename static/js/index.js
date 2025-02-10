@@ -22,7 +22,8 @@ window.app = Vue.createApp({
       tab: 'frameworks',
       framworktab: 'fastapi',
       usefultab: 'magicalg',
-      vettedData: ''
+      vettedData: '',
+      baseUrl: window.location.origin
     }
   },
   // Where functions live
@@ -36,7 +37,7 @@ window.app = Vue.createApp({
           data
         )
         .then(response => {
-          this.exampleData = response.data.map(mapObject) // Often whats returned is mapped onto some model
+          this.exampleData.push(mapObject(response.data)) // Often whats returned is mapped onto some model
         })
         // Error will be passed to the frontend
         .catch(LNbits.utils.notifyApiError)

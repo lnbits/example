@@ -1,16 +1,12 @@
 import asyncio
 
 from fastapi import APIRouter
-from lnbits.db import Database
 from loguru import logger
 
+from .crud import db
 from .tasks import wait_for_paid_invoices
 from .views import example_ext_generic
 from .views_api import example_ext_api
-
-db = Database("ext_example")
-
-scheduled_tasks: list[asyncio.Task] = []
 
 example_ext: APIRouter = APIRouter(prefix="/example", tags=["example"])
 example_ext.include_router(example_ext_generic)
@@ -22,6 +18,8 @@ example_static_files = [
         "name": "example_static",
     }
 ]
+
+scheduled_tasks: list[asyncio.Task] = []
 
 
 def example_stop():
@@ -37,3 +35,12 @@ def example_start():
 
     task = create_permanent_unique_task("ext_testing", wait_for_paid_invoices)
     scheduled_tasks.append(task)
+
+
+__all__ = [
+    "db",
+    "example_ext",
+    "example_static_files",
+    "example_start",
+    "example_stop",
+]
