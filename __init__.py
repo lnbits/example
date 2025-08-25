@@ -40,7 +40,7 @@ def example_start():
 __all__ = [
     "db",
     "example_ext",
-    "example_static_files",
     "example_start",
+    "example_static_files",
     "example_stop",
 ]
