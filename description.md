@@ -1,9 +1,12 @@
-An easily clonable extension that can be used a base for building a new extension.
+A starter template for developers to build new LNbits extensions.
 
-THe usual development enviroment is:
+Its functions include:
 
-- Clone the myextension repo to your own repo
-- Edit the cloned repos manifest to your details
-- Install into LNbits
-- Delete the cloned extensions folder in your LNbits install
-- Create a symbolic link to the extensions folder, from the where you have pulled your extension `ln -s /where/you/cloned/myextension /your/lnbits/installl/lnbits/lnbits/extensions/`
+- Providing a clonable base structure for new extensions
+- Demonstrating LNbits extension patterns and best practices
+- Including example API endpoints and database models
+- Supporting symbolic linking for local development
+
+The recommended starting point for developers who want to create custom LNbits extensions with proper structure and conventions. 
+
+Note: If you are using LLMs to generate Code, please use our Instructions to feed your Modal.
