@@ -1,7 +1,7 @@
 {
-  "name": "example",
+  "name": "silnt",
   "version": "1.0.0",
-  "description": "<small>For more about LNBits extension check [this tutorial](https://github.com/lnbits/lnbits/wiki/LNbits-Extensions)</small>",
+  "description": "<small>Silent Payments Wallet Extension</small>",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,0 +1,366 @@
+<q-card>
+  <q-card-section>
+    <q-banner class="bg-warning text-dark q-mb-md" rounded>
+        <template v-slot:avatar>
+          <q-icon name="info" />
+        </template>
+        Wallet operations (scan, send, generate labeled addresses) as well as Admin configurations are available
+        in the <strong>Thrilla</strong> mobile/web app, where keys are stored
+        securely on your device.
+        <template v-slot:action>
+          <q-btn
+            flat
+            dense
+            :href="thrillaUrl"
+            target="_blank"
+            label="Open Thrilla"
+            icon-right="open_in_new"
+          />
+        </template>
+    </q-banner>
+    <!-- <div class="row items-center no-wrap q-mb-md justify-between">
+      <div class="col-auto">
+        <q-btn-dropdown
+          split
+          unelevated
+          label="Silent Payments Wallet Account"
+          color="primary"
+          @click="showAddAccountDialog"
+        >
+          <q-list>
+            <q-item @click="showAddAccountDialog" clickable v-close-popup>
+              <q-item-section>
+                <q-item-label>New Wallet Account</q-item-label>
+                <q-item-label caption
+                  >Generate Silent Payment Address</q-item-label
+                >
+              </q-item-section>
+            </q-item>           
+          </q-list>
+        </q-btn-dropdown>
+      </div>
+      <div class="col-auto q-pl-sm">
+        <q-btn
+          unelevated
+          color="primary"
+          icon="travel_explore"
+          label="Resolve BIP353"
+          @click="$emit('open-bip353')"
+        ></q-btn>
+      </div>
+      <div class="col-4 q-pl-lg"></div>      
+    </div> -->
+    <!-- <q-table
+      flat
+      dense
+      :rows="walletAccounts"
+      row-key="id"
+      :columns="walletsTable.columns"
+      v-model:pagination="walletsTable.pagination"
+      :filter="filter"
+    >
+      <template v-slot:header="props">
+        <q-tr :props="props">          
+          <q-th
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+            auto-width
+          >
+            <span v-text="col.label"></span>
+          </q-th>
+          <q-th auto-width></q-th>
+        </q-tr>
+      </template>
+      <template v-slot:body="props">
+        <q-tr :props="props">
+          <q-td key="sp_address" :props="props" style="vertical-align: top">
+            <span style="cursor:pointer">
+              <span v-text="props.row.sp_address ? props.row.sp_address.slice(0, 14) + '...' : ''"></span>
+              <q-tooltip v-text="props.row.sp_address"></q-tooltip>
+            </span>            
+            <div
+              v-for="addr in props.row.addresses"
+              :key="addr.id || addr._tempId"
+              class="row items-center no-wrap q-mt-xs"
+              style="border-left: 2px solid #9c27b0; padding-left: 6px"
+            >
+              <span class="col text-orange" style="font-family:monospace;font-size:10px;cursor:pointer">
+                <span v-text="addr.sp_address ? addr.sp_address.slice(0, 14) + '...' : ''"></span>
+                <q-tooltip v-text="addr.sp_address"></q-tooltip>
+              </span>
+              <div class="col-auto row no-wrap">
+                <q-btn flat dense size="xs" icon="content_copy" color="grey"
+                  @click="copyText(addr.sp_address)">
+                  <q-tooltip>Copy</q-tooltip>
+                </q-btn>
+                <q-btn flat dense size="xs" icon="qr_code" color="purple"
+                  @click="showQrCodeAddress(addr.sp_address)">
+                  <q-tooltip>QR Code</q-tooltip>
+                </q-btn>
+                <q-btn
+                  v-if="!addr.id"
+                  flat dense size="xs" icon="save" color="positive"
+                  @click="saveAddress(props.row, addr)">
+                  <q-tooltip>Save address</q-tooltip>
+                </q-btn>
+                <q-btn flat dense size="xs" icon="delete" color="pink"
+                  @click="deleteAddress(props.row, addr)">
+                  <q-tooltip>Delete</q-tooltip>
+                </q-btn>
+              </div>
+            </div>
+          </q-td>                
+          <q-td key="title" :props="props" style="vertical-align: top">
+            <div v-text="props.row.title"></div>
+          </q-td>          
+          <q-td key="hr_address" :props="props" style="vertical-align: top">
+            <div v-text="props.row.hr_address"></div>
+          </q-td>          
+          <q-td key="last_height" :props="props" style="vertical-align: top">
+            <div v-text="props.row.last_height"></div>
+          </q-td>
+          <q-td key="balance" :props="props" style="vertical-align: top">
+            <div v-text="props.row.balance"></div>
+          </q-td>          
+          <q-td auto-width style="vertical-align: top">
+            <q-btn flat dense disable size="xs" color="grey" icon="send" label="Send">
+              <q-tooltip>
+                Sending requires client-side keys. Use the Thrilla app on this wallet.
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              size="xs"
+              @click="$emit('fetch-utxos', props.row)"
+              icon="storage"
+              color="teal"
+            >
+              <q-tooltip>Load UTXOs from DB</q-tooltip>
+            </q-btn>
+            <q-btn flat dense disable size="xs" color="grey" icon="search" label="Scan">
+              <q-tooltip>
+                Scanning requires client-side keys. Use the Thrilla app on this wallet.
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              size="xs"
+              @click="updateWalletDialog(props.row.id)"
+              icon="edit"
+              color="light-blue"
+            >
+              <q-tooltip>Edit Wallet's HR Address/Height</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              size="xs"
+              @click="showQrCode(props.row)"
+              icon="qr_code"
+              color="purple"
+            >
+              <q-tooltip>Show SP Address QR</q-tooltip>
+            </q-btn>                        
+            <q-btn
+              flat
+              dense
+              size="xs"
+              @click="deleteWalletDialog(props.row.id, true)"
+              icon="cancel"
+              color="pink"
+            >
+              <q-tooltip
+                >Deleting wallet will also delete all UTXOs</q-tooltip
+              >
+            </q-btn>
+            <q-btn flat dense disable size="xs" color="grey" icon="add" label="Add Labeled Address">
+              <q-tooltip>
+                Address generation requires client-side keys. Use the Thrilla app.
+              </q-tooltip>
+            </q-btn>
+          </q-td>
+        </q-tr>
+      </template>
+    </q-table> -->
+  </q-card-section>
+</q-card>
+<!-- <q-dialog v-model="qrDialog.show" position="top">
+  <q-card class="q-pa-lg lnbits__dialog-card">
+    <div class="row items-center q-mb-md">
+      <h5 class="text-subtitle1 q-my-none">Receive to Silent Payment Address</h5>
+      <q-space></q-space>
+      <q-btn v-close-popup flat round icon="close" color="grey"></q-btn>
+    </div>
+    <q-separator class="q-mb-md"></q-separator>
+
+    <div class="text-center q-mb-md">
+      <lnbits-qrcode
+        :value="qrDialog.address"
+        :show-buttons="false"
+      ></lnbits-qrcode>
+    </div>
+
+    <div
+      class="q-pa-sm q-mb-md"
+      style="
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+        word-break: break-all;
+        line-height: 1.6;
+        color: #f97316;
+        text-align: center;
+      "
+    >
+      <span v-text="qrDialog.address"></span>
+    </div>
+
+    <div class="row justify-center q-gutter-sm">
+      <q-btn
+        flat
+        dense
+        icon="content_copy"
+        color="orange"
+        label="Copy"
+        @click="copyText(qrDialog.address)"
+      ></q-btn>
+      <q-btn v-close-popup flat color="grey">Close</q-btn>
+    </div>
+  </q-card>
+</q-dialog>
+<q-dialog v-model="formDialog.show" position="top" @hide="closeFormDialog">
+  <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+    <q-form @submit="addWalletAccount" class="q-gutter-md">
+      <q-input
+        filled
+        dense
+        v-model.trim="formDialog.data.title"
+        type="text"
+        label="Title"
+      ></q-input>
+      <q-input
+        v-if="!formDialog.mnemonic"
+        filled
+        type="textarea"
+        v-model="formDialog.data.mnemonic"
+        height="30px"
+        autogrow
+        label="12 words mnemonic - STORE SAFELY SINCE I WON'T!!"
+        ><q-tooltip
+            anchor="center middle"
+            self="center middle"
+            :offset="[0, 10]"
+          >
+            Encrypted and used only for SP Address derivation.
+      </q-tooltip>
+      </q-input>
+      <q-input
+        filled
+        dense
+        v-model.trim="formDialog.data.last_height"
+        type="text"
+        label="Born at Height (Mandatory):"
+        ><q-tooltip
+            anchor="center middle"
+            self="center middle"
+            :offset="[0, 10]"
+          >
+            Block Height of the First Transaction or enter latest Block Height on Mempool
+      </q-tooltip>
+      </q-input>
+      <q-input
+        filled
+        dense
+        v-model.trim="formDialog.data.hr_address"
+        type="text"
+        label="Human Readable Address (Optional)"
+        :hint="formDialog.data.hr_address ? 'Will be validated against BIP353 DNS on submit' : ''"
+      ><q-tooltip
+            anchor="center middle"
+            self="center middle"
+            :offset="[0, 10]"
+          >
+            Email format - see BIP353
+      </q-tooltip>
+    </q-input>
+      <div>
+        <div class="text-caption text-grey q-mb-xs">Network</div>
+        <q-btn-toggle
+          v-model="formDialog.data.network"
+          toggle-color="primary"
+          color="white"
+          text-color="primary"
+          :options="[
+            {label: 'Mainnet', value: 'mainnet'},
+            {label: 'Signet',  value: 'signet'}
+          ]"
+        ></q-btn-toggle>
+      </div>
+      <div class="row q-mt-lg">
+        <q-btn
+          unelevated
+          color="primary"
+          label="Add Wallet Account"
+          :disable="
+                (formDialog.data.mnemonic == null || formDialog.data.last_height == null || formDialog.data.title == null) || showCreating"
+          type="submit"
+        >
+        </q-btn>
+        <q-spinner v-if="showCreating" color="primary" size="2em"></q-spinner>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+      </div>
+    </q-form>
+  </q-card>
+</q-dialog>
+<q-dialog v-model="updateDialog.show" position="top" @hide="closeUpdateDialog">
+  <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+    <q-form @submit="updateWalletAccount" class="q-gutter-md">
+      <q-input
+        filled
+        dense
+        v-model.trim="updateDialog.data.title"
+        type="text"
+        label="Title"
+      ></q-input>      
+      <q-input
+        filled
+        dense
+        v-model.trim="updateDialog.data.last_height"
+        type="text"
+        label="Born at Height:"
+        >
+        <q-tooltip
+            anchor="center middle"
+            self="center middle"
+            :offset="[0, 10]"
+          >
+            Block Height of the First Transaction
+      </q-tooltip>
+      </q-input>
+      <q-input
+        filled
+        dense
+        v-model.trim="updateDialog.data.hr_address"
+        type="text"
+        label="Human Readable Address"
+        @update:model-value="val => { if (!val) bip353Valid = true }"
+      ></q-input>
+      <div class="row q-mt-lg">
+        <q-btn
+          unelevated
+          color="primary"
+          label="Update Wallet Account"
+          :disable="showUpdating" 
+          type="submit"         
+        >
+        </q-btn>
+        <q-spinner v-if="showUpdating" color="primary" size="2em"></q-spinner>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+      </div>
+    </q-form>
+  </q-card>
+</q-dialog> -->

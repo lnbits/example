@@ -1,12 +1,22 @@
 [project]
-name = "lnbits-example"
-version = "0.0.0"
+name = "silnt"
+version = "0.1.0"
 requires-python = ">=3.10,<3.13"
-description = "LNbits, free and open-source Lightning wallet and accounts system."
-authors = [{ name = "Alan Bits", email = "alan@lnbits.com" }]
-urls = { Homepage = "https://lnbits.com", Repository = "https://github.com/lnbits/example" }
+description = "Silent Payments OnChain Wallet for LNBits"
+authors = [{ name = "Bitaurus", email = "ponthief@bitaurus.net" }]
+urls = { Homepage = "https://bitaurus.net", Repository = "https://github.com/ponthief/silnt" }
 
-dependencies = [ "lnbits>1" ]
+dependencies = [
+ "coincurve>=20.0.0",
+ "cryptography>=42.0.8",
+ "dnspython>=2.7.0",
+ "ecdsa>=0.19.1",
+ "embit>=0.8.0",
+ "fastapi>=0.115.13",
+ "httpx>=0.27.0",
+ "mnemonic>=0.21",
+ "pydantic>=1.10.22",
+]
 
 [tool.uv]
 dev-dependencies = [
@@ -30,6 +40,7 @@ warn_untyped_fields = true
 
 [[tool.mypy.overrides]]
 module = [
+  "embit.*",
   "lnbits.*",
   "lnurl.*",
   "loguru.*",
@@ -38,6 +49,9 @@ module = [
   "pyqrcode.*",
   "shortuuid.*",
   "httpx.*",
+  "coincurve.*",
+  "ecdsa.*",
+  "cryptography.*"
 ]
 ignore_missing_imports = "True"
 

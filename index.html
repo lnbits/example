@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thrilla — Silent Payments & BitMail, self-custodial</title>
+<meta name="description" content="Thrilla brings Silent Payments, collaborative PayJoin, and email-style BitMail addresses to a trusted circle of users on top of LNbits, BlindBit, and Fulcrum. Your seeds never touch the server.">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="thrilla-icon.png">
+<meta property="og:title" content="Thrilla — Silent Payments & BitMail">
+<meta property="og:description" content="A self-custodial friends-and-family Bitcoin wallet: private Silent Payments to the outside world, collaborative PayJoin within your circle. Your keys never touch the server.">
+<meta property="og:image" content="thrilla-icon.png">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0d;
+    --bg-2: #0f1513;
+    --panel: #121917;
+    --border: #1f2a27;
+    --border-bright: #2c3d38;
+    --ink: #e8efe9;
+    --dim: #8a9b94;
+    --faint: #5a6b64;
+    --orange: #f7931a;       /* bitcoin */
+    --green: #3fb950;        /* signal / go */
+    --green-dim: rgba(63,185,80,.12);
+    --orange-dim: rgba(247,147,26,.10);
+    --radius: 14px;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --display: 'Fraunces', Georgia, serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* grain + glow atmosphere */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1100px 600px at 75% -10%, rgba(247,147,26,.07), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(63,185,80,.06), transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1; opacity: .5;
+  }
+
+  .wrap { position: relative; z-index: 2; max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* ─── nav ─── */
+  nav {
+    position: relative; z-index: 3;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 26px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; letter-spacing: -.02em; font-size: 17px; }
+  .brand .mark {
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    filter: drop-shadow(0 4px 12px rgba(247,147,26,.35));
+  }
+  .brand .mark img { width: 100%; height: 100%; object-fit: contain; }
+  .nav-links { display: flex; gap: 26px; align-items: center; font-size: 13.5px; }
+  .nav-links a { color: var(--dim); text-decoration: none; transition: color .2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-social { font-size: 15px; line-height: 1; display: inline-flex; align-items: center; }
+  .nav-links .cta {
+    color: var(--green); border: 1px solid var(--border-bright);
+    padding: 8px 16px; border-radius: 8px; background: var(--green-dim);
+    transition: all .2s;
+  }
+  .nav-links .cta:hover { border-color: var(--green); box-shadow: 0 0 24px rgba(63,185,80,.2); }
+  .nav-ghost-btn {
+    color: var(--dim); border: 1px solid var(--border-bright);
+    padding: 8px 16px; border-radius: 8px; background: rgba(255,255,255,.02);
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-ghost-btn:hover { color: var(--ink); border-color: var(--dim); background: rgba(255,255,255,.05); }
+  @media (max-width: 640px){ .nav-links a:not(.cta){ display:none; } }
+  @media (max-width: 640px){ .nav-links a.nav-social{ display:inline-flex; } }
+
+  /* hero mascot */
+  .hero-mascot {
+    width: clamp(110px, 16vw, 160px); height: auto;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 16px 40px rgba(247,147,26,.3));
+    animation: bob 3.6s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{ transform: translateY(0) rotate(-2deg); } 50%{ transform: translateY(-12px) rotate(2deg); } }
+
+  /* ─── hero ─── */
+  header { padding: 50px 0 80px; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--faint); margin-bottom: 28px;
+  }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(40px, 7vw, 78px);
+    line-height: 1.02;
+    letter-spacing: -.025em;
+    margin-bottom: 26px;
+  }
+  h1 em { font-style: italic; color: var(--orange); }
+  .lead { font-size: clamp(16px, 2.2vw, 19px); color: var(--dim); max-width: 620px; line-height: 1.6; }
+  .lead strong { color: var(--ink); font-weight: 500; }
+
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 40px; }
+  .btn {
+    font-family: var(--mono); font-size: 14px; font-weight: 500;
+    padding: 14px 24px; border-radius: 10px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    transition: all .2s; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--orange); color: #0a0e0d; font-weight: 600; box-shadow: 0 8px 30px rgba(247,147,26,.25); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 38px rgba(247,147,26,.35); }
+  .btn-ghost { border-color: var(--border-bright); color: var(--ink); background: rgba(255,255,255,.02); }
+  .btn-ghost:hover { border-color: var(--dim); background: rgba(255,255,255,.05); }
+  .btn .arrow { transition: transform .2s; }
+  .btn:hover .arrow { transform: translateX(3px); }
+
+  .signet-note { margin-top: 16px; font-size: 12.5px; color: var(--faint); display: flex; align-items: center; gap: 8px; }
+  .signet-badge { color: var(--green); border: 1px solid var(--border-bright); padding: 1px 8px; border-radius: 5px; background: var(--green-dim); font-size: 11px; }
+
+  /* ─── address demo strip ─── */
+  .demo {
+    margin-top: 56px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    overflow: hidden;
+  }
+  .demo-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,.2); }
+  .demo-bar .d { width: 11px; height: 11px; border-radius: 50%; }
+  .demo-bar .d:nth-child(1){ background:#ff5f56 } .demo-bar .d:nth-child(2){ background:#ffbd2e } .demo-bar .d:nth-child(3){ background:#27c93f }
+  .demo-bar span { margin-left: 10px; font-size: 12px; color: var(--faint); }
+  .demo-body { padding: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px){ .demo-body { grid-template-columns: 1fr; } }
+  .demo-cell .k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .demo-cell .v { font-size: 13px; word-break: break-all; color: var(--ink); }
+  .demo-cell .v.addr { color: var(--orange); }
+  .demo-cell .v.mail { color: var(--green); }
+  .demo-cell .meta { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
+
+  /* ─── sections ─── */
+  section { padding: 64px 0; position: relative; }
+  .sec-head { margin-bottom: 44px; }
+  .sec-tag { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+  .sec-title { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 4.5vw, 42px); line-height: 1.1; letter-spacing: -.02em; }
+  .sec-sub { color: var(--dim); margin-top: 14px; max-width: 600px; }
+
+  /* feature grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--panel); padding: 26px;
+    transition: border-color .25s, transform .25s;
+    position: relative; overflow: hidden;
+  }
+  .card:hover { border-color: var(--border-bright); transform: translateY(-3px); }
+  .card .icon { font-size: 22px; margin-bottom: 16px; display: block; }
+  .card h3 { font-family: var(--display); font-weight: 500; font-size: 21px; letter-spacing: -.01em; margin-bottom: 10px; }
+  .card p { font-size: 14px; color: var(--dim); line-height: 1.6; }
+  .card .tag { display:inline-block; margin-top:14px; font-size:11px; color:var(--faint); border:1px solid var(--border); padding:2px 9px; border-radius:5px; }
+
+  /* stack / how it works */
+  .stack { display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--border); margin-left: 8px; }
+  .step { padding: 0 0 34px 32px; position: relative; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before {
+    content: ""; position: absolute; left: -9px; top: 4px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--orange);
+  }
+  .step h4 { font-size: 16px; font-weight: 600; margin-bottom: 7px; color: var(--ink); }
+  .step p { font-size: 14px; color: var(--dim); }
+  .step .layer { font-size: 11px; color: var(--orange); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* security block */
+  .sec-security { background: linear-gradient(180deg, transparent, rgba(63,185,80,.025)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .vault { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 18px; }
+  .vault-item { display: flex; gap: 14px; align-items: flex-start; }
+  .vault-item .ic { flex-shrink: 0; width: 38px; height: 38px; border-radius: 9px; background: var(--green-dim); border: 1px solid var(--border-bright); display: grid; place-items: center; font-size: 18px; }
+  .vault-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+  .vault-item p { font-size: 13.5px; color: var(--dim); line-height: 1.55; }
+
+  /* foundation logos row */
+  .foundation { display: flex; flex-wrap: wrap; gap: 14px; }
+  .pill { border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; background: var(--panel); flex: 1; min-width: 220px; }
+  .pill .name { font-weight: 600; font-size: 15px; margin-bottom: 5px; display:flex; align-items:center; gap:8px; }
+  .pill .role { font-size: 12.5px; color: var(--dim); }
+  .pill .name .badge { font-size: 10px; padding: 1px 7px; border-radius: 4px; background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(247,147,26,.25); }
+
+  /* CTA */
+  .final {
+    text-align: center; border: 1px solid var(--border-bright); border-radius: 20px;
+    padding: 60px 30px; background:
+      radial-gradient(600px 300px at 50% 0%, rgba(247,147,26,.08), transparent 70%),
+      var(--panel);
+    margin-bottom: 70px;
+  }
+  .final h2 { font-family: var(--display); font-weight: 400; font-size: clamp(28px,5vw,46px); letter-spacing: -.02em; margin-bottom: 16px; }
+  .final p { color: var(--dim); max-width: 480px; margin: 0 auto 30px; }
+
+  footer { border-top: 1px solid var(--border); padding: 34px 0 60px; color: var(--faint); font-size: 13px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+  footer a { color: var(--dim); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+  .disclaim { font-size: 11.5px; color: var(--faint); max-width: 540px; line-height: 1.5; }
+
+  /* privacy comparison */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 40px; }
+  @media (max-width: 680px){ .compare { grid-template-columns: 1fr; } }
+  .compare .col { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; background: var(--panel); }
+  .compare .col.bad { border-color: rgba(255,95,86,.22); background: linear-gradient(180deg, rgba(255,95,86,.04), var(--panel)); }
+  .compare .col.good { border-color: rgba(63,185,80,.28); background: linear-gradient(180deg, rgba(63,185,80,.05), var(--panel)); }
+  .compare .col .label { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .compare .bad .label { color: #ff7b72; }
+  .compare .good .label { color: var(--green); }
+  .compare ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .compare li { font-size: 13.5px; color: var(--dim); line-height: 1.5; padding-left: 26px; position: relative; }
+  .compare li::before { position: absolute; left: 0; top: 0; font-size: 14px; }
+  .compare .bad li::before { content: "✕"; color: #ff7b72; }
+  .compare .good li::before { content: "✓"; color: var(--green); }
+  .compare li strong { color: var(--ink); font-weight: 500; }
+
+  .privacy-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 16px; }
+  .pp { border-left: 2px solid var(--orange); padding: 4px 0 4px 18px; }
+  .pp h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .pp p { font-size: 13.5px; color: var(--dim); line-height: 1.55; }
+
+  /* honest caveats */
+  .caveats {
+    margin-top: 36px; border: 1px dashed var(--border-bright); border-radius: var(--radius);
+    padding: 26px 28px; background: rgba(255,255,255,.015);
+  }
+  .caveats .ch { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .caveats .ch .t { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .caveats .ch .badge { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); border: 1px solid var(--border); padding: 2px 8px; border-radius: 5px; }
+  .caveats ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; }
+  @media (max-width: 680px){ .caveats ul { grid-template-columns: 1fr; } }
+  .caveats li { font-size: 13px; color: var(--dim); line-height: 1.55; padding-left: 22px; position: relative; }
+  .caveats li::before { content: "—"; position: absolute; left: 0; color: var(--faint); }
+  .caveats li strong { color: var(--ink); font-weight: 500; }
+
+  /* friends & family callout */
+  .ff {
+    margin-top: 8px; border: 1px solid var(--border-bright); border-radius: var(--radius);
+    padding: 28px 30px;
+    background: linear-gradient(180deg, rgba(247,147,26,.05), var(--panel));
+  }
+  .ff .ff-tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--orange); margin-bottom: 12px; }
+  .ff h3 { font-family: var(--display); font-weight: 500; font-size: 24px; letter-spacing: -.01em; margin-bottom: 12px; }
+  .ff p { font-size: 14px; color: var(--dim); line-height: 1.62; max-width: 760px; }
+  .ff p + p { margin-top: 12px; }
+  .ff strong { color: var(--ink); font-weight: 500; }
+
+  /* onboarding / account steps */
+  .onboard-note {
+    margin-top: 22px; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px 26px; background: var(--panel); display: flex; gap: 16px; align-items: flex-start;
+  }
+  .onboard-note .ic { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--green-dim); border: 1px solid var(--border-bright); display: grid; place-items: center; font-size: 19px; }
+  .onboard-note h4 { font-size: 15px; font-weight: 600; margin-bottom: 7px; }
+  .onboard-note p { font-size: 13.5px; color: var(--dim); line-height: 1.58; }
+  .onboard-note p + p { margin-top: 9px; }
+  .onboard-note strong { color: var(--ink); font-weight: 500; }
+  .mailref { color: var(--green); }
+
+  /* coming-soon badge */
+  .soon { display:inline-block; margin-left:8px; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); border:1px solid var(--border); padding:2px 8px; border-radius:5px; vertical-align:middle; }
+
+  /* contact */
+  /* social links */
+  .social-line { margin-top: 16px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .social-line a {
+    font-size: 13px; color: var(--dim); text-decoration: none;
+    border: 1px solid var(--border-bright); border-radius: 8px;
+    padding: 7px 14px; background: rgba(255,255,255,.02);
+    display: inline-flex; align-items: center; gap: 7px; transition: all .2s;
+  }
+  .social-line a:hover { color: var(--ink); border-color: var(--dim); background: rgba(255,255,255,.05); }
+
+  /* reveal on load */
+  .reveal { opacity: 0; transform: translateY(16px); animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.45s}
+
+  /* ─── tabs ─── */
+  .tabs-bar { display: flex; gap: 8px; padding: 8px 28px 0; flex-wrap: wrap; position: relative; z-index: 3; }
+  .tab-btn { font-family: var(--mono); font-size: 13.5px; font-weight: 500; color: var(--dim); background: transparent; border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; padding: 11px 20px; cursor: pointer; transition: all .2s; }
+  .tab-btn:hover { color: var(--ink); border-color: var(--border-bright); }
+  .tab-btn.active { color: var(--orange); border-color: var(--border-bright); background: var(--panel); }
+  .tab-panel { display: none; animation: rise .5s cubic-bezier(.2,.7,.2,1); }
+  .tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <div class="brand"><span class="mark"><img src="thrilla-icon.png" alt="Thrilla"></span> Thrilla</div>
+    <div class="nav-links">
+      <a href="#" onclick="showTab('home');return false">Home</a>
+      <a href="#" onclick="showTab('privacy');return false">Privacy</a>
+      <a href="#" onclick="showTab('how');return false">How it works</a>
+      <a class="nav-social" href="https://x.com/thrillabtc" target="_blank" rel="noopener noreferrer" title="Thrilla on X" aria-label="Thrilla on X">𝕏</a>
+      <a class="nav-social" href="https://t.me/thrilla_btc" target="_blank" rel="noopener noreferrer" title="Thrilla on Telegram" aria-label="Thrilla on Telegram">✈</a>
+      <a class="nav-ghost-btn" href="https://github.com/ponthief/siLNt/tree/master" target="_blank" rel="noopener noreferrer">View it in GitHub</a>
+      <a class="cta" href="https://signet.thrilla.me">Try on Signet →</a>
+    </div>
+  </nav>
+</div>
+
+<div class="tabs-bar wrap">
+  <button class="tab-btn active" data-tab="home"    onclick="showTab('home')">Home</button>
+  <button class="tab-btn"        data-tab="privacy" onclick="showTab('privacy')">Privacy</button>
+  <button class="tab-btn"        data-tab="how"     onclick="showTab('how')">How it works &amp; Security</button>
+</div>
+
+<!-- ─── HOME ─── -->
+<div class="tab-panel active" id="tab-home">
+<header class="wrap tab-home">
+  <img class="hero-mascot reveal d1" src="thrilla-icon.png" alt="Thrilla mascot — a celebrating Bitcoin coin">
+  <div class="eyebrow reveal d1"><span class="dot"></span> Self-custodial · Silent Payments · PayJoin · Friends &amp; family</div>
+  <h1 class="reveal d2">A friends-and-family wallet<br>with an address you can <em>actually say out loud.</em></h1>
+  <p class="lead reveal d3">Thrilla is a self-custodial <strong>friends-and-family</strong> wallet built on LNbits. Inside your circle you transact with <strong>collaborative PayJoin</strong>; to the outside world you receive with maximum-privacy <strong>Silent Payments</strong> and share a human-readable <strong>BitMail</strong> name. Powered by a BlindBit Oracle and a Fulcrum electrum server — your keys stay on your device and never reach the server.</p>
+  <div class="hero-actions reveal d4">
+    <a class="btn btn-primary" href="https://signet.thrilla.me">Launch the Signet demo <span class="arrow">→</span></a>
+    <a class="btn btn-ghost" href="#" onclick="showTab('privacy');return false">Why it matters <span class="arrow">→</span></a>
+  </div>
+  <div class="signet-note reveal d4"><span class="signet-badge">SIGNET</span> Test it with worthless coins first — no real funds required. Active development is ongoing, so the platform may briefly go offline from time to time.</div>
+
+  <div class="demo reveal d5">
+    <div class="demo-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span>thrilla — receive</span></div>
+    <div class="demo-body">
+      <div class="demo-cell">
+        <div class="k">Silent Payment address</div>
+        <div class="v addr">sp1qq2f8…d9k3 · reusable forever</div>
+        <div class="meta">One static code. Every payment lands on a fresh, unlinkable output only you can detect.</div>
+      </div>
+      <div class="demo-cell">
+        <div class="k">BitMail address</div>
+        <div class="v mail">alice@mydomain.net</div>
+        <div class="meta">The same payment code, wrapped in an email-style name your friends can remember.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="wrap" id="circle">
+  <div class="ff reveal">
+    <div class="ff-tag">Who it's for</div>
+    <h3>A friends-and-family wallet — trust inside, privacy outside</h3>
+    <p>Thrilla is designed for a <strong>known circle</strong> — friends, family, a small community — sharing one LNbits instance. Within that circle there's an expected level of trust, so members can transact <strong>collaboratively via PayJoin</strong>: two people co-sign a single transaction that improves privacy and consolidates coins, without a middleman.</p>
+    <p>Toward the <strong>outside world</strong>, you present your <strong>Silent Payment</strong> address — reusable, unlinkable, and safe to publish — so the public ledger never becomes a map of who pays you. Friendly trust on the inside, maximum privacy on the outside.</p>
+    <p><strong>Your keys are your responsibility.</strong> Thrilla is self-custodial: every member generates and holds their own keys on their own device. No one — not other members, not the server operator — can move your Silent Payment funds for you, and no one can recover them if you lose your backup.</p>
+  </div>
+</section>
+
+<section class="wrap" id="what">
+  <div class="sec-head">
+    <div class="sec-tag">What it does</div>
+    <div class="sec-title">Reusable addresses without the privacy tax</div>
+    <p class="sec-sub">Traditional Bitcoin forces a trade-off: reuse one address and leak your whole history, or generate endless new ones and drown in bookkeeping. Silent Payments end that compromise — and collaborative PayJoin lets your circle transact together with better privacy.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <span class="icon">🔇</span>
+      <h3>Silent Payments</h3>
+      <p>Publish a single static address. Senders derive a unique on-chain output for each payment using shared-secret cryptography, so nothing on the blockchain links your payments together — yet only you can find and spend them.</p>
+      <span class="tag">Reusable &amp; unlinkable</span>
+    </div>
+    <div class="card">
+      <span class="icon">🤝</span>
+      <h3>Collaborative PayJoin</h3>
+      <p>Pay another member of your instance with a transaction you <strong>both</strong> contribute inputs to. This breaks the common "all inputs share one owner" assumption that chain-analysis relies on, and can consolidate UTXOs at the same time. Designed for the trusted circle — both sides co-sign one transaction, no third party in between.</p>
+      <span class="tag">Within your circle</span>
+    </div>
+    <div class="card">
+      <span class="icon">✉️</span>
+      <h3>BitMail</h3>
+      <p>Long payment codes are hard to share. BitMail maps a friendly <em>name@domain</em> to your Silent Payment address over DNS, so you can hand someone <strong>alice@mydomain.net</strong> instead of a 116-character string.</p>
+      <span class="tag">DNS-backed</span>
+    </div>
+    <div class="card">
+      <span class="icon">⚡</span>
+      <h3>Lightning wallet <span class="soon">On mainnet</span></h3>
+      <p>Each account will include a built-in Lightning wallet for instant, low-fee spending — the natural pairing with Silent Payments for private receiving. <strong>Arriving when Thrilla launches on mainnet;</strong> the current Signet release focuses on Silent Payments and PayJoin.</p>
+      <span class="tag">Coming at mainnet launch</span>
+    </div>
+    <div class="card">
+      <span class="icon">🔁</span>
+      <h3>On-chain ↔ Lightning swaps <span class="soon">On mainnet</span></h3>
+      <p>Move Silent Payment funds into Lightning without an exchange, via non-custodial submarine swaps through <strong>Boltz</strong>. <strong>This will become available once Thrilla launches on mainnet</strong> alongside the Lightning wallet.</p>
+      <span class="tag">Coming at mainnet launch</span>
+    </div>
+    <div class="card">
+      <span class="icon">👥</span>
+      <h3>Multi-user by design</h3>
+      <p>One deployment serves a circle of independent users, each with their own wallet, addresses, and device trust. Thrilla rides on LNbits' account model, so onboarding a new person is just another login.</p>
+      <span class="tag">One instance, many wallets</span>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="account">
+  <div class="sec-head">
+    <div class="sec-tag" style="color:var(--green)">Before you start</div>
+    <div class="sec-title">Create an account to secure your device</div>
+    <p class="sec-sub">Thrilla ties each wallet to securely authenticated devices. Creating an account is what makes that possible — and it only takes a moment.</p>
+  </div>
+
+  <div class="onboard-note reveal">
+    <div class="ic">📧</div>
+    <div>
+      <h4>Account creation is required</h4>
+      <p>To use Thrilla you must <strong>create an account</strong>. This is what lets the app <strong>securely authenticate your device</strong>: each new device is confirmed via an email link before it can access a wallet, so a password alone is never enough to reach your funds from an unknown machine.</p>
+      <p>The confirmation email comes from <strong><span class="mailref" data-user="thrilla" data-domain="bitaurus.net"></span></strong>. If you don't see it within a minute, <strong>check your spam or junk folder</strong> and mark it as "not spam" so future messages arrive in your inbox.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="fund">
+  <div class="sec-head">
+    <div class="sec-tag" style="color:var(--green)">Get started</div>
+    <div class="sec-title">Fund your wallet with free Signet coins</div>
+    <p class="sec-sub">Signet coins have no monetary value — they exist purely for testing. Grab some from a faucet and send your first Silent Payment in minutes.</p>
+  </div>
+
+  <div class="fund-steps" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
+    <div class="fund-step" style="display:flex;gap:16px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:22px;">
+      <div class="n" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:15px;color:var(--green);background:var(--green-dim);border:1px solid var(--border-bright);">1</div>
+      <div>
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">Create an account &amp; confirm your device</h4>
+        <p style="font-size:13.5px;color:var(--dim);line-height:1.55;">Sign up, then click the confirmation link emailed from <span class="mailref" data-user="thrilla" data-domain="bitaurus.net"></span> (check spam if needed). Generate a Silent Payment wallet and copy your <span style="color:var(--orange)">sp1q…</span> address.</p>
+      </div>
+    </div>
+    <div class="fund-step" style="display:flex;gap:16px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:22px;">
+      <div class="n" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:15px;color:var(--green);background:var(--green-dim);border:1px solid var(--border-bright);">2</div>
+      <div>
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">Claim coins from the Signet faucet</h4>
+        <p style="font-size:13.5px;color:var(--dim);line-height:1.55;">Paste your address into the faucet and request test coins. They'll arrive on-chain shortly — scan your wallet to detect them.</p>
+        <a class="btn btn-ghost" style="margin-top:14px;font-size:13px;padding:9px 16px;" href="https://silentpayments.dev/faucet/signet" target="_blank" rel="noopener noreferrer">
+          Open the Signet faucet <span class="arrow">→</span>
+        </a>
+      </div>
+    </div>
+    <div class="fund-step" style="display:flex;gap:16px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:22px;">
+      <div class="n" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:15px;color:var(--green);background:var(--green-dim);border:1px solid var(--border-bright);">3</div>
+      <div>
+        <h4 style="font-size:15px;font-weight:600;margin-bottom:6px;">Send, receive, PayJoin &amp; explore</h4>
+        <p style="font-size:13.5px;color:var(--dim);line-height:1.55;">Try a payment, claim a BitMail name, do a collaborative PayJoin with another member, and watch unlinkable outputs land — all risk-free with worthless coins.</p>
+      </div>
+    </div>
+  </div>
+  <div class="signet-note" style="margin-top:22px"><span class="signet-badge">SIGNET</span> The faucet at silentpayments.dev dispenses test coins only — never send real Bitcoin to a Signet address.</div>
+</section>
+
+<section class="wrap">
+  <div class="final">
+    <h2>Try Thrilla on Signet</h2>
+    <p>Create an account, generate a Silent Payment address, claim a BitMail name, and try a collaborative PayJoin with a friend — all with worthless test coins. No risk, no real funds.</p>
+    <a class="btn btn-primary" href="https://signet.thrilla.me" style="font-size:15px;padding:16px 30px;">Open signet.thrilla.me <span class="arrow">→</span></a>
+    <div style="margin-top:18px">
+      <a href="https://silentpayments.dev/faucet/signet" target="_blank" rel="noopener noreferrer" style="color:var(--green);font-size:13.5px;text-decoration:none;border-bottom:1px solid var(--border-bright);padding-bottom:2px">Need test coins? Use the Signet faucet →</a>
+    </div>
+    <div class="social-line">
+      <a href="https://x.com/thrillabtc" target="_blank" rel="noopener noreferrer">𝕏 @thrillabtc</a>
+      <a href="https://t.me/thrilla_btc" target="_blank" rel="noopener noreferrer">✈ Telegram</a>
+      <a href="https://github.com/ponthief/siLNt/tree/master" target="_blank" rel="noopener noreferrer">&lt;/&gt; Source on GitHub</a>
+    </div>
+    <div class="signet-note" style="justify-content:center;margin-top:18px;"><span class="signet-badge">SIGNET</span> Test network · Lightning &amp; Boltz swaps arrive at mainnet launch · coins have no monetary value</div>
+  </div>
+</section>
+</div>
+
+<!-- ─── PRIVACY ─── -->
+<div class="tab-panel" id="tab-privacy">
+<section class="wrap" id="privacy">
+  <div class="sec-head">
+    <div class="sec-tag">Why it matters</div>
+    <div class="sec-title">Privacy that holds up on a public ledger</div>
+    <p class="sec-sub">Every Bitcoin transaction is permanent and public. The way you receive funds decides whether that ledger becomes a map of your financial life — or stays just noise to everyone but you.</p>
+  </div>
+
+  <div class="compare">
+    <div class="col bad">
+      <div class="label">⚠ Reusing one normal address</div>
+      <ul>
+        <li>Every payment to you is <strong>visibly clustered</strong> under the same address forever.</li>
+        <li>Anyone you've paid, or who's paid you, can see your <strong>total balance and history</strong>.</li>
+        <li>Posting an address publicly ties your <strong>real-world identity</strong> to all of it.</li>
+        <li>Chain-analysis firms link it to past and future activity automatically.</li>
+      </ul>
+    </div>
+    <div class="col good">
+      <div class="label">✓ One Silent Payment address</div>
+      <ul>
+        <li>Each payment lands on a <strong>fresh, unique output</strong> with no on-chain link to the others.</li>
+        <li>Observers see unrelated outputs — your <strong>balance and history stay private</strong>.</li>
+        <li>You can publish the same address <strong>anywhere</strong> without creating a public trail.</li>
+        <li>Only you, with your scan key, can even tell which outputs are yours.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="privacy-points">
+    <div class="pp">
+      <h4>No address reuse, ever</h4>
+      <p>Share one static code for years. Each sender derives a different on-chain destination, so reuse of the public address never becomes reuse on the chain.</p>
+    </div>
+    <div class="pp">
+      <h4>Unlinkable payments</h4>
+      <p>Two payments to the same Silent Payment address produce outputs that look entirely unrelated to any third party — there's no common key or address joining them.</p>
+    </div>
+    <div class="pp">
+      <h4>Collaborative PayJoin inside the circle</h4>
+      <p>When members pay each other, both contribute inputs to one transaction. That defeats the "single owner of all inputs" heuristic chain-analysis leans on — privacy that comes from cooperation, not just cryptography.</p>
+    </div>
+    <div class="pp">
+      <h4>Receiver-side privacy</h4>
+      <p>You don't have to interact with the sender or hand out a new address each time. No address-request dance, no leaking which invoice belongs to whom.</p>
+    </div>
+    <div class="pp">
+      <h4>Safe to publish</h4>
+      <p>Put your address — or your BitMail name — on a profile, an invoice, or a donation page. Public exposure no longer means a public spending history.</p>
+    </div>
+    <div class="pp">
+      <h4>Resistant to chain analysis</h4>
+      <p>Clustering heuristics rely on address reuse and linkable, single-owner inputs. Silent Payments and PayJoin remove both signals, breaking the usual surveillance assumptions.</p>
+    </div>
+  </div>
+
+  <div class="caveats">
+    <div class="ch">
+      <span class="t">What Silent Payments &amp; PayJoin don't do</span>
+      <span class="badge">Straight talk</span>
+    </div>
+    <ul>
+      <li>Silent Payments protect the <strong>receiving</strong> side. The coins you spend still carry their own prior history, so good coin selection and labeling still matter.</li>
+      <li>They <strong>aren't a mixer.</strong> Amounts and the timing of transactions remain visible on-chain, even if the links between your received outputs aren't.</li>
+      <li>PayJoin assumes a <strong>trusted counterparty</strong> in your circle — it's a friends-and-family feature, and the other member sees their side of the transaction.</li>
+      <li>Network-level privacy is <strong>separate.</strong> Who broadcasts a transaction and from what IP isn't covered here — pair with Tor or your own node for that layer.</li>
+      <li>Your <strong>keys are your responsibility.</strong> Self-custody means there's no password reset for your funds — lose your backup and the coins are gone; no one can recover them for you.</li>
+      <li>BitMail resolves over <strong>DNS</strong>, so the resolver and the domain operator can see which name was looked up. The payment itself stays private; the lookup is a normal DNS query.</li>
+      <li>Privacy depends on <strong>how you use it.</strong> Linking an output to your identity elsewhere (an exchange, a public post) can still de-anonymize that specific payment.</li>
+    </ul>
+  </div>
+</section>
+</div>
+
+<!-- ─── HOW IT WORKS & SECURITY ─── -->
+<div class="tab-panel" id="tab-how">
+<section class="wrap" id="how">
+  <div class="sec-head">
+    <div class="sec-tag">How it works</div>
+    <div class="sec-title">Layers doing one job</div>
+    <p class="sec-sub">Thrilla is the interface. The cryptography, scanning, and collaborative transactions are handled by open components underneath it.</p>
+  </div>
+  <div class="stack">
+    <div class="step">
+      <div class="layer">Layer 01 · Interface</div>
+      <h4>Thrilla — the wallet you see</h4>
+      <p>A fast web app that builds and signs Silent Payment and PayJoin transactions locally, manages your BitMail address, and shows balances and activity. All signing happens in your browser; the server only ever sees what it strictly needs to.</p>
+    </div>
+    <div class="step">
+      <div class="layer">Layer 02 · Backend</div>
+      <h4>LNbits — accounts &amp; orchestration</h4>
+      <p>Thrilla runs as an LNbits extension. LNbits provides the multi-user account system, authentication, and device confirmation, letting a single self-hosted instance serve a whole circle securely and independently. (The built-in Lightning wallet activates at mainnet launch.)</p>
+    </div>
+    <div class="step">
+      <div class="layer">Layer 03 · Indexing</div>
+      <h4>BlindBit &amp; Fulcrum — indexing the chain</h4>
+      <p>Finding your Silent Payment outputs means scanning the chain with your scan key. A BlindBit Oracle precomputes the tweak and UTXO indexes so your wallet can detect incoming payments quickly, and a Fulcrum electrum server supplies fast address and transaction lookups — all without your spend key ever leaving your device.</p>
+    </div>
+    <div class="step">
+      <div class="layer">Layer 04 · Swaps <span class="soon">On mainnet</span></div>
+      <h4>Boltz — on-chain ↔ Lightning</h4>
+      <p>Once Thrilla launches on mainnet, swaps will talk directly to a Boltz submarine-swap backend: you fund a lockup address from your SP wallet, Boltz pays your Lightning invoice, and the swap stays non-custodial — a failed swap is refundable on-chain with a key only your wallet holds.</p>
+    </div>
+  </div>
+</section>
+<section class="sec-security" id="security">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-tag" style="color:var(--green)">Security model</div>
+      <div class="sec-title">The server never holds your keys</div>
+      <p class="sec-sub">Self-custody isn't a slogan here — it's enforced by where the secrets physically live. Thrilla is built so that a full server compromise still can't move your Silent Payment coins. Those keys are yours to hold and yours to back up.</p>
+    </div>
+    <div class="vault">
+      <div class="vault-item">
+        <div class="ic">🔑</div>
+        <div>
+          <h4>Seeds are never stored server-side</h4>
+          <p>Your mnemonic and the keys derived from it are generated and held client-side, encrypted in your own browser. The server derives keys transiently during setup and discards them — there is no seed column in the database to leak. Backing up your seed is your responsibility.</p>
+        </div>
+      </div>
+      <div class="vault-item">
+        <div class="ic">📱</div>
+        <div>
+          <h4>Account + device confirmation</h4>
+          <p>Using Thrilla requires creating an account. New devices must then be explicitly confirmed via an email link (sent from <span class="mailref" data-user="thrilla" data-domain="bitaurus.net"></span> — check spam) before they can access a wallet, so a stolen password alone can't reach your funds from an unknown machine.</p>
+        </div>
+      </div>
+      <div class="vault-item">
+        <div class="ic">✍️</div>
+        <div>
+          <h4>Local signing</h4>
+          <p>Transactions — including collaborative PayJoins — are constructed and signed in your browser using keys that never travel over the wire. The backend only broadcasts the finished, signed transaction — it can't author one on your behalf.</p>
+        </div>
+      </div>
+      <div class="vault-item">
+        <div class="ic">🤝</div>
+        <div>
+          <h4>Collaborative, not custodial</h4>
+          <p>A PayJoin between members is co-signed by both parties on a single transaction. Each side signs locally with their own keys; neither the other member nor the server can spend on your behalf.</p>
+        </div>
+      </div>
+      <div class="vault-item">
+        <div class="ic">🏠</div>
+        <div>
+          <h4>Self-hostable, end to end</h4>
+          <p>Run your own LNbits, BlindBit Oracle, and Fulcrum server (and, at mainnet, a Boltz backend) and the entire stack is yours — no third party sits between you and the chain, and no analytics company profiles your spending.</p>
+        </div>
+      </div>
+      <div class="vault-item">
+        <div class="ic">🔍</div>
+        <div>
+          <h4>Verifiable, open components</h4>
+          <p>Thrilla, LNbits, BlindBit, and Fulcrum are open and inspectable. The cryptography follows the open Silent Payments standard rather than a proprietary scheme you'd have to take on trust.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="wrap" id="foundation">
+  <div class="sec-head">
+    <div class="sec-tag">Built on</div>
+    <div class="sec-title">Standing on solid, open foundations</div>
+  </div>
+  <div class="foundation">
+    <div class="pill">
+      <div class="name">LNbits <span class="badge">accounts + API</span></div>
+      <div class="role">Multi-user, self-hosted Bitcoin &amp; Lightning backend. Thrilla ships as an LNbits extension, inheriting its battle-tested auth, account model, and device confirmation.</div>
+    </div>
+    <div class="pill">
+      <div class="name">BlindBit <span class="badge">SP Oracle</span></div>
+      <div class="role">A Silent Payments indexer that precomputes tweak and UTXO data, so wallets can scan for incoming payments fast — without exposing spend keys.</div>
+    </div>
+    <div class="pill">
+      <div class="name">Boltz <span class="badge">swaps · on mainnet</span></div>
+      <div class="role">A non-custodial submarine-swap service. At mainnet launch, Thrilla will talk to a Boltz backend directly to move funds between on-chain Silent Payments and Lightning, trust-minimized.</div>
+    </div>
+    <div class="pill">
+      <div class="name">Fulcrum <span class="badge">electrum server</span></div>
+      <div class="role">A fast electrum server providing address and transaction lookups, so your wallet can verify balances and build transactions without trusting a third-party explorer.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="wrap">
+  <footer>
+    <div>
+      <div style="margin-bottom:8px;color:var(--dim)">Thrilla · self-custodial Silent Payments, PayJoin &amp; BitMail</div>
+      <div class="disclaim">Thrilla is experimental software currently on the Signet test network. Because it's under active testing, the platform may go down for short periods without notice. It is a friends-and-family wallet: self-custody means you are solely responsible for safeguarding your own keys and backups. Lightning and Boltz swaps arrive at mainnet launch. Nothing here is financial advice.</div>
+      <div class="social-line" style="margin-top:10px;justify-content:flex-start;">
+        <a href="https://x.com/thrillabtc" target="_blank" rel="noopener noreferrer">𝕏 @thrillabtc</a>
+        <a href="https://t.me/thrilla_btc" target="_blank" rel="noopener noreferrer">✈ Telegram</a>
+        <a href="https://github.com/ponthief/siLNt/tree/master" target="_blank" rel="noopener noreferrer">&lt;/&gt; GitHub</a>
+      </div>
+    </div>
+    <div style="display:flex;gap:22px;align-items:flex-start;">
+      <a href="#" onclick="showTab('home');return false">Home</a>
+      <a href="#" onclick="showTab('privacy');return false">Privacy</a>
+      <a href="#" onclick="showTab('how');return false">How</a>
+      <a href="https://signet.thrilla.me">Signet</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var panel = document.getElementById('tab-' + name);
+    if (panel) panel.classList.add('active');
+    document.querySelectorAll('.tab-btn[data-tab="' + name + '"]').forEach(b => b.classList.add('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Crawler-resistant email: assembled in JS from split data-* attributes so the
+  // address never appears verbatim in the HTML source for scrapers to scrape.
+  (function () {
+    function buildEmails() {
+      document.querySelectorAll('.mailref').forEach(function (el) {
+        var u = el.getAttribute('data-user');
+        var d = el.getAttribute('data-domain');
+        if (!u || !d) return;
+        var addr = u + String.fromCharCode(64) + d;   // 64 = '@'
+        var a = document.createElement('a');
+        a.href = 'mailto:' + addr;
+        a.textContent = addr;
+        a.style.color = 'var(--green)';
+        a.style.textDecoration = 'none';
+        el.textContent = '';
+        el.appendChild(a);
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', buildEmails);
+    } else {
+      buildEmails();
+    }
+  })();
+</script>
+
+</body>
+</html>

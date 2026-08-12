@@ -4,16 +4,15 @@ from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
 
-example_ext_generic = APIRouter(tags=["example"])
+silnt_generic_router = APIRouter()
 
 
-@example_ext_generic.get(
-    "/", description="Example generic endpoint", response_class=HTMLResponse
-)
-async def index(
-    request: Request,
-    user: User = Depends(check_user_exists),
-):
-    return template_renderer(["example/templates"]).TemplateResponse(
-        request, "example/index.html", {"user": user.json()}
+def silnt_renderer():
+    return template_renderer(["siLNt/templates"])
+
+
+@silnt_generic_router.get("/", response_class=HTMLResponse)
+async def index(request: Request, user: User = Depends(check_user_exists)):
+    return silnt_renderer().TemplateResponse(
+        "silnt/index.html", {"request": request, "user": user.json()}
     )

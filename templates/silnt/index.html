@@ -1,0 +1,494 @@
+{% extends "base.html" %} {% from "macros.jinja" import window_vars with context
+%} {% block page %}
+<div class="row q-col-gutter-md">
+  <div class="col-12 col-md-7 q-gutter-y-md">
+    <wallet-config
+      :total="utxos.total"
+      v-model:config-data="config"
+      :adminkey="g.user.wallets[0].adminkey"
+      :inkey="g.user.wallets[0].inkey"
+      :can-edit-config="!!(g.user.super_user || g.user.admin)"
+    >
+    </wallet-config>
+
+    <wallet-list
+      ref="walletListRef"
+      v-if="config.isLoaded"
+      :adminkey="g.user.wallets[0].adminkey"
+      :inkey="g.user.wallets[0].inkey"
+      :sats-denominated="config.sats_denominated"
+      :network="config.network"      
+      :scanned-utxos="lastScanResult"     
+      @accounts-update="updateAccounts"      
+      @fetch-utxos="fetchUtxos"      
+      @scan-wallet="scanWallet"
+      @clear-utxos="clearUtxosForWallet"
+      @open-bip353="showBip353Dialog = true"
+      @send-wallet="openSendDialog"
+    >
+    </wallet-list>    
+     <q-card v-if="scanProgress.active" class="q-pa-md">
+    <div class="row items-center q-mb-sm">
+      <div class="col text-caption text-grey">
+        Scanning blockchain...
+        <span class="text-orange text-weight-bold" v-text="scanProgress.current.toLocaleString()"></span>
+        /
+        <span v-text="scanProgress.total.toLocaleString()"></span>
+        blocks
+      </div>
+      <div class="col-auto text-caption text-grey">
+        <span class="text-green text-weight-bold" v-text="scanProgress.found"></span>
+        UTXOs found
+      </div>
+       <div class="col-auto">
+        <q-btn
+          flat
+          dense
+          size="sm"
+          icon="stop"
+          color="negative"
+          :loading="scanProgress.stopping"
+          @click="stopScan"
+        >
+          <q-tooltip>Stop Scan</q-tooltip>
+        </q-btn>
+      </div>  
+    </div>
+    <q-linear-progress
+      :value="scanProgress.total > 0 ? Math.round(scanProgress.current / scanProgress.total * 100) + '%' : '0%'"
+      size="8px"
+      color="orange"
+      track-color="grey-3"
+      rounded
+    ></q-linear-progress>
+    <div class="text-right text-caption text-grey q-mt-xs">
+      <span v-text="scanProgress.total > 0 ? Math.round(scanProgress.current / scanProgress.total * 100) + '%' : '0%'"></span>
+    </div>
+  </q-card>
+    <!-- <q-card v-if="config.isLoaded">
+      <q-card-section>
+        <q-tabs v-model="tab" no-caps class="bg-dark text-white shadow-2">          
+          <q-tab name="utxos" label="UTXOs"></q-tab>
+        </q-tabs>
+        <q-tab-panels v-model="tab">          
+          <q-tab-panel name="utxos">
+            <utxo-list
+              :utxos="utxos.data"              
+              :accounts="walletAccounts"
+              :sats-denominated="config.sats_denominated"
+              :mempool-endpoint="mempoolBaseUrl"
+              :filter="utxosFilter"
+            ></utxo-list>
+          </q-tab-panel>
+        </q-tab-panels>
+      </q-card-section>
+    </q-card>     -->
+  </div>
+
+  <div class="col-12 col-md-5 q-gutter-y-md">
+    <q-card>
+      <q-card-section>
+        <h6 class="text-subtitle1 q-my-none">
+          Thrilla - Silent Payments Wallet          
+        </h6>
+      </q-card-section>
+      <q-card-section class="q-pa-none">
+        <q-separator></q-separator>
+        <q-list> {% include "silnt/_api_docs.html" %} </q-list>
+      </q-card-section>
+    </q-card>
+  </div>
+  <q-dialog v-model="showSendDialog" position="top" maximized>
+    <q-card class="q-pa-lg lnbits__dialog-card" style="max-width:680px;margin:auto">
+      <div class="row items-center q-mb-md">
+        <h5 class="text-subtitle1 q-my-none">Send Payment</h5>
+        <q-space></q-space>
+        <q-btn v-close-popup flat round icon="close" color="grey"></q-btn>
+      </div>
+      <q-separator></q-separator><br />
+
+      <!-- Wallet info -->
+      <div v-if="sendWallet" class="q-mb-md">
+        <div class="text-caption text-grey">Wallet</div>
+        <div class="text-body2" v-text="sendWallet.title"></div>
+        <div class="text-caption text-grey q-mt-xs">
+          Available Balance:
+          <span class="text-orange text-weight-bold" v-text="sendWallet.balance + ' sats'"></span>
+        </div>
+      </div>
+
+      <!-- Recipient -->
+      <q-input
+        filled
+        dense
+        v-model.trim="sendForm.recipient"
+        label="Recipient Address (Silent Payment/On-Chain/BIP353)"
+        class="q-mb-md"
+      ></q-input>
+
+      <!-- Amount -->
+      <q-input
+        filled
+        dense
+        v-model.number="sendForm.amount"
+        type="number"
+        label="Amount (sats)"
+        :hint="sendForm.useAllUtxos ? 'Using all unspent UTXOs' : ''"
+        class="q-mb-sm"
+        :disable="sendForm.useAllUtxos"
+      ></q-input>
+
+      <q-checkbox
+        v-model="sendForm.useAllUtxos"
+        label="Use all unspent UTXOs (send max)"
+        class="q-mb-md"
+        @update:model-value="onUseAllUtxos"
+      ></q-checkbox>
+
+      <!-- UTXO selection -->
+      <div class="q-mb-md">
+        <div class="text-caption text-grey q-mb-xs">Select UTXOs to spend</div>
+        <div
+          v-if="!sendUtxos.length"
+          class="text-caption text-grey text-italic q-pa-sm"
+          style="border:1px solid #e0e0e0;border-radius:4px"
+        >
+          No unspent UTXOs available. Please scan the blockchain first or Load from DB.
+        </div>
+        <q-list
+          v-else
+          bordered
+          separator
+          dense
+          style="border-radius:4px;max-height:220px;overflow-y:auto"
+        >
+          <q-item
+            v-for="utxo in sendUtxos"
+            :key="utxo.txid"
+            tag="label"
+            clickable
+          >
+            <q-item-section side>
+              <q-checkbox
+                v-model="utxo.selected"
+                :disable="sendForm.useAllUtxos"
+              ></q-checkbox>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>
+                <span class="text-orange" v-text="utxo.amount + ' sats'"></span>
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side v-if="utxo.label">
+              <q-chip dense color="deep-purple" text-color="white" size="sm">
+                <span v-text="utxo.label"></span>
+              </q-chip>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </div>
+       <q-banner
+          v-if="selectedUtxoLabels.length > 1"
+          dense
+          class="text-white bg-negative q-mb-sm"
+          icon="warning"
+        >
+          Warning: selected UTXOs have different labels (<span v-text="selectedUtxoLabels.join(', ')"></span>).
+          Mixing labeled UTXOs may reduce privacy.
+      </q-banner>
+      <!-- Selected total -->
+      <div v-if="sendSelectedTotal > 0" class="q-mb-md text-caption">
+        Selected total:
+        <span class="text-orange text-weight-bold" v-text="sendSelectedTotal + ' sats'"></span>
+      </div>
+
+      <!-- Fee rate -->
+      <q-input
+        filled
+        dense
+        v-model.number="sendForm.feeRate"
+        type="number"
+        label="Fee Rate (sat/vB)"
+        min="0.1"
+        step="0.1"
+        hint="Minimum 0.1 sat/vB"
+        class="q-mb-md"
+      ></q-input>
+
+      <!-- Memo -->
+      <q-input
+        filled
+        dense
+        v-model.trim="sendForm.memo"
+        label="Memo (optional)"
+        class="q-mb-lg"
+      ></q-input>
+
+      <div class="row q-gutter-sm">
+        <q-btn
+          unelevated
+          color="primary"
+          label="Build Transaction"
+          :disable="!canBuildTx"
+          :loading="sendLoading"
+          @click="buildTransaction"
+        ></q-btn>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+      </div>
+
+      <!-- Built TX result -->
+      <div v-if="sendTxResult" class="q-mt-lg">
+        <q-separator class="q-mb-md"></q-separator>
+        <div class="text-caption text-grey q-mb-xs">Built Transaction (Hex)</div>
+        <div
+          style="
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+            line-height: 1.6;
+            color: #f97316;
+            max-height: 140px;
+            overflow-y: auto;
+          "
+        >
+          <span v-text="sendTxResult"></span>
+        </div>
+        <div class="row q-mt-sm q-gutter-sm">
+          <q-btn
+            flat
+            dense
+            icon="content_copy"
+            color="orange"
+            label="Copy"
+            size="sm"
+            @click="copyText(sendTxResult)"
+          ></q-btn>
+          <q-btn
+            unelevated
+            color="green"
+            label="Broadcast"
+            size="sm"
+            :loading="broadcastLoading"
+            @click="confirmBroadcast"
+          ></q-btn>
+        </div>
+      </div>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="showScanDialog" position="top">
+    <q-card class="q-pa-lg lnbits__dialog-card">
+      <div class="row items-center q-mb-md">
+        <h5 class="text-subtitle1 q-my-none">Scan Blockchain</h5>
+        <q-space></q-space>
+        <q-btn v-close-popup flat round icon="close" color="grey"></q-btn>
+      </div>
+      <q-separator class="q-mb-md"></q-separator>
+
+      <div v-if="scanDialog.wallet" class="q-mb-md">
+        <div class="text-caption text-grey q-mb-xs">Wallet</div>
+        <div
+          class="text-body2"
+          style="font-family:monospace;font-size:11px;word-break:break-all"
+          v-text="scanDialog.wallet.sp_address"
+        ></div>
+      </div>
+      <div class="row q-gutter-md q-mb-lg">
+        <div class="col">
+          <div class="text-caption text-grey q-mb-xs">Last Scan</div>
+          <q-input
+            filled
+            dense
+            v-model.number="scanDialog.lastHeight"
+            type="number"
+            :hint="'Wallet born at: ' + (scanDialog.wallet ? scanDialog.wallet.last_height : '')"
+          ></q-input>
+        </div>
+        <div class="col">
+          <div class="text-caption text-grey q-mb-xs">Chain Tip</div>
+          <div v-if="scanDialog.loading" class="q-mt-xs">
+            <q-spinner color="primary" size="1.5em"></q-spinner>
+          </div>
+          <q-input
+            v-else
+            filled
+            dense
+            v-model.number="scanDialog.chainTip"
+            type="number"
+            :hint="scanDialog.oracleTip ? 'Chain tip: ' + scanDialog.oracleTip : 'Unavailable'"
+          ></q-input>
+        </div>
+        <div class="col">
+          <div class="text-caption text-grey q-mb-xs">Blocks to Scan</div>
+          <div
+            v-if="scanDialog.chainTip && !scanDialog.loading"
+            class="text-h6 text-weight-bold"
+            v-text="(scanDialog.chainTip - scanDialog.lastHeight).toLocaleString()"
+          ></div>
+          <div v-else class="text-caption text-grey">—</div>
+        </div>
+      </div>
+      <p class="text-caption text-grey q-mb-lg">
+        This will scan every block from your wallet's last scan height to the
+        current chain tip. Scanning may take several minutes depending on the
+        range.
+      </p>
+
+      <div class="row q-gutter-sm">
+        <q-btn
+          unelevated
+          color="orange"
+          label="Scan For Utxos"
+          :disable="!scanDialog.chainTip || scanDialog.loading"
+          @click="startScan"
+        ></q-btn>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+      </div>
+    </q-card>    
+  </q-dialog>   
+  <q-dialog v-model="showBip353Dialog" position="top">
+    <q-card class="q-pa-lg lnbits__dialog-card">
+      <h5 class="text-subtitle1 q-my-none">Resolve BIP353 Address</h5>
+      <q-separator></q-separator><br />
+
+      <q-input
+        filled
+        dense
+        v-model.trim="bip353Address"
+        type="text"
+        label="BIP353 Address (e.g. alice@domain.com)"
+        :disable="bip353Loading"
+      ></q-input>
+
+      <div v-if="bip353Result" class="q-mt-md">
+        <h5 class="text-caption q-mb-xs">Resolved Address</h5>
+        <div
+          style="
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            line-height: 1.6;
+            color: #f97316;
+          "
+        >
+          <span v-text="bip353Result"></span>
+          <q-btn
+            flat
+            dense
+            size="xs"
+            icon="content_copy"
+            color="orange"
+            class="q-ml-sm"
+            @click="copyText(bip353Result)"
+          ></q-btn>
+        </div>
+      </div>
+      <div class="row q-mt-lg q-gutter-sm">
+        <q-btn
+          unelevated
+          color="primary"
+          label="Submit"
+          :loading="bip353Loading"
+          :disable="!bip353Address || bip353Loading"
+          @click="resolveBip353"
+        ></q-btn>
+        <q-btn
+          v-close-popup
+          flat
+          color="grey"
+          class="q-ml-auto"
+          @click="bip353Result = ''"
+          >Close</q-btn
+        >
+      </div>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="showBroadcastConfirm" position="top">
+    <q-card v-if="sendForm && sendTxAmount" class="q-pa-lg lnbits__dialog-card">
+      <div class="row items-center q-mb-md">
+        <h5 class="text-subtitle1 q-my-none">Confirm Broadcast</h5>
+        <q-space></q-space>
+        <q-btn v-close-popup flat round icon="close" color="grey"></q-btn>
+      </div>
+      <q-separator class="q-mb-md q-mt-sm"></q-separator>
+
+      <div class="q-mb-md">
+        <div class="text-caption text-grey q-mb-xs">Amount</div>
+        <div class="text-orange text-weight-bold" v-text="sendTxAmount + ' sats'"></div>
+        <div
+          v-if="parseInt(sendTxAmount) !== parseInt(sendForm.amount)"
+          class="text-caption text-warning"
+        >
+          Adjusted from <span v-text="sendForm.amount"></span> sats to avoid dust change.
+        </div>
+      </div>
+
+      <div class="q-mb-md">
+        <div class="text-caption text-grey q-mb-xs">Recipient</div>
+        <div
+          style="font-family:monospace;font-size:11px;word-break:break-all"
+          v-text="sendForm.recipient"
+        ></div>
+      </div>
+
+      <div class="q-mb-lg">
+        <div class="text-caption text-grey q-mb-xs">Fee</div>
+        <div class="text-weight-bold" v-text="sendTxFee + ' sats'"></div>
+        <div
+          class="text-caption text-grey"
+          v-text="sendForm.feeRate + ' sat/vB · ' + sendTxVsize + ' vB'"
+        ></div>
+      </div>
+
+      <div class="row q-gutter-sm">
+        <q-btn
+          unelevated
+          color="green"
+          label="Confirm Broadcast"
+          :loading="broadcastLoading"
+          @click="broadcastTransaction"
+        ></q-btn>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+      </div>
+    </q-card>
+  </q-dialog>
+</div>
+
+{% endblock %} {% block vue_templates %}
+
+<!-- <template id="wallet-config"
+  >{% include("silnt/components/wallet-config.html") %}</template
+>
+<template id="utxo-list"
+  >{% include("silnt/components/utxo-list.html") %}</template
+>
+<template id="wallet-list"
+  >{% include("silnt/components/wallet-list.html") %}</template
+> -->
+
+{% endblock %} {% block scripts %} {{ window_vars(user) }}
+<style>
+  .btn-full {
+    width: 100%;
+  }
+</style>
+<script type="text/javascript" src="https://mempool.space/mempool.js"></script>
+
+<script src="{{ static_url_for('siLNt/static', path='js/tables.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'js/map.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'js/utils.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'js/bip39-word-list.js') }}"></script>
+
+<script src="{{ static_url_for('siLNt/static', 'js/index.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'components/wallet-config.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'components/wallet-list.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'components/utxo-list.js') }}"></script>
+<script src="{{ static_url_for('siLNt/static', 'js/crypto/aes.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+
+{% endblock %}

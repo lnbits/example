@@ -1,0 +1,211 @@
+<q-card>
+  <q-card-section>
+    <div class="row items-center no-wrap q-mb-md">
+      <div v-if="selectable" class="col-3 q-pr-lg">
+        <q-select
+          filled
+          dense
+          emit-value
+          v-model="utxoSelectionMode"
+          :options="utxoSelectionModes"
+          label="Selection Mode"
+          @input="updateUtxoSelection"
+        ></q-select>
+      </div>
+      <div v-if="selectable" class="col-1 q-pr-lg">
+        <q-btn
+          outline
+          icon="refresh"
+          color="grey"
+          @click="updateUtxoSelection"
+          class="q-ml-sm"
+        ></q-btn>
+      </div>
+      <div v-if="selectable" class="col-5 q-pr-lg"></div>
+      <div v-if="!selectable" class="col-9 q-pr-lg"></div>      
+    </div>
+
+    <!-- Totals summary -->
+    <div class="row q-mb-md q-gutter-md">
+      <q-badge color="positive" class="q-pa-sm text-body2">
+        Unspent: <strong v-text="'&nbsp;' + satBtc(unspentTotal)"></strong>
+      </q-badge>
+      <q-badge color="negative" class="q-pa-sm text-body2">
+        Spent: <strong v-text="'&nbsp;' + satBtc(spentTotal)"></strong>
+      </q-badge>
+    </div>
+
+    <q-table
+      flat
+      dense
+      :rows="utxos"
+      row-key="txid"
+      :columns="columns"
+      :pagination.sync="utxosTable.pagination"
+      :filter="filter"
+    >
+      <template v-slot:body="props">
+        <q-tr :props="props">
+          <!-- Expand toggle -->
+          <q-td auto-width>
+            <q-btn
+              size="sm"
+              color="primary"
+              round
+              dense
+              @click="props.row.expanded = !props.row.expanded"
+              :icon="props.row.expanded ? 'remove' : 'add'"
+            />
+          </q-td>
+
+          <!-- Optional selection checkbox -->
+          <q-td v-if="selectable" key="selected" :props="props">
+            <div>
+              <q-checkbox v-model="props.row.selected"></q-checkbox>
+            </div>
+          </q-td>
+
+          <!-- UTXO state badge (replaces confirmed/pending) -->
+          <q-td key="status" :props="props">
+            <div>
+              <q-badge
+                v-if="props.row.utxo_state === 'unspent'"
+                color="positive"
+                class="q-mr-sm cursor-pointer"
+                @click="props.row.expanded = !props.row.expanded"
+              >unspent</q-badge>
+              <q-badge
+                v-else-if="props.row.utxo_state === 'spent'"
+                color="negative"
+                class="q-mr-sm cursor-pointer"
+                @click="props.row.expanded = !props.row.expanded"
+              >spent</q-badge>              
+              <q-badge
+                v-else-if="props.row.utxo_state === 'broadcasted'"
+                color="blue"
+                class="q-mr-sm cursor-pointer"
+                @click="props.row.expanded = !props.row.expanded"
+              >
+                <q-icon name="send" size="10px" class="q-mr-xs"></q-icon>
+                broadcasted
+              </q-badge>
+              <q-badge
+                v-else
+                color="grey"
+                class="q-mr-sm cursor-pointer"
+                @click="props.row.expanded = !props.row.expanded"
+                v-text="props.row.utxo_state || 'unknown'"
+              ></q-badge>               
+              <!-- Label badge if this UTXO has a silent payment label -->
+              <q-badge
+                v-if="props.row.label"
+                color="purple"
+                text-color="white"
+                class="q-mr-sm"
+              >labeled</q-badge>
+            </div>
+          </q-td>
+
+          <!-- Amount -->
+          <q-td
+            key="amount"
+            :props="props"
+            class="text-green-13 text-weight-bold"
+          >
+            <div v-text="satBtc(props.row.amount)"></div>
+          </q-td>
+
+          <!-- Timestamp -->
+          <q-td key="date" :props="props">
+            <div v-if="props.row.timestamp" v-text="formatTimestamp(props.row.timestamp)"></div>
+            <div v-else class="text-grey text-caption">N/A</div>
+          </q-td>
+          <q-td key="label" :props="props">
+            <q-chip
+              v-if="props.row.label && !props.row.editingLabel"
+              dense
+              color="deep-purple"
+              text-color="white"
+              style="font-size:11px"
+              @click="startEditLabel(props.row)"
+              clickable
+            >
+              <span v-text="props.row.label"></span>
+              <q-tooltip>Click to edit label</q-tooltip>
+            </q-chip>
+            <q-btn
+              v-else-if="!props.row.editingLabel"
+              flat dense size="xs"
+              icon="label_outline"
+              color="grey"
+              @click="startEditLabel(props.row)"
+            >
+              <q-tooltip>Add label</q-tooltip>
+            </q-btn>
+            <div v-if="props.row.editingLabel" class="row no-wrap items-center">
+              <q-input
+                v-model="props.row.labelDraft"
+                dense
+                autofocus
+                style="width:120px;font-size:12px"
+                @keyup.enter="saveLabel(props.row)"
+                @keyup.escape="cancelEditLabel(props.row)"
+              ></q-input>
+              <q-btn flat dense size="xs" icon="check" color="positive" @click="saveLabel(props.row)"></q-btn>
+              <q-btn flat dense size="xs" icon="close" color="grey" @click="cancelEditLabel(props.row)"></q-btn>
+            </div>
+          </q-td>
+        </q-tr>
+
+        <!-- Expanded detail row -->
+        <q-tr v-show="props.row.expanded" :props="props">
+          <q-td colspan="100%">
+            <!-- Transaction ID -->
+            <div class="row items-center q-mb-sm">
+              <div class="col-2 text-weight-bold">Transaction ID</div>
+              <div class="col-10" style="font-family: monospace; word-break: break-all">
+                <a
+                  style="color: unset"
+                  :href="mempoolEndpoint + '/tx/' + props.row.txid"
+                  target="_blank"
+                  v-text="props.row.txid"
+                ></a>
+              </div>
+            </div>
+             <div v-if="props.row.utxo_state === 'broadcasted'" class="row items-center q-mb-sm">
+            <div class="col-2 text-weight-bold">Status</div>
+            <div class="col-10 text-caption text-grey">
+              Pending confirmation and NOT persisted. Scan ONLY after confirmation to update your UTXO list.
+            </div>
+          </div>
+            <!-- Label details (if present) -->
+            <div v-if="props.row.label" class="q-mt-sm">
+              <div class="row items-center q-mb-sm">
+                <div class="col-2 text-weight-bold">Label Address</div>
+                <div class="col-10" style="font-family: monospace; word-break: break-all"
+                  v-text="props.row.label.address">
+                </div>
+              </div>
+              <div class="row items-center q-mb-sm">
+                <div class="col-2 text-weight-bold">Label Pub Key</div>
+                <div class="col-10" style="font-family: monospace; word-break: break-all"
+                  v-text="props.row.label.pub_key">
+                </div>
+              </div>
+              <div class="row items-center q-mb-sm">
+                <div class="col-2 text-weight-bold">Label Tweak</div>
+                <div class="col-10" style="font-family: monospace; word-break: break-all"
+                  v-text="props.row.label.tweak">
+                </div>
+              </div>
+              <div class="row items-center q-mb-sm">
+                <div class="col-2 text-weight-bold">Label Index (m)</div>
+                <div class="col-10" v-text="props.row.label.m"></div>
+              </div>
+            </div>
+          </q-td>
+        </q-tr>
+      </template>
+    </q-table>
+  </q-card-section>
+</q-card>

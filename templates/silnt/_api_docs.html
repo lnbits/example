@@ -1,0 +1,489 @@
+<!-- <q-expansion-item
+  group="extras"
+  icon="info"
+  label="Guide"
+  :content-inset-level="0.5"
+>
+  <q-card>
+    <p>
+      <q-card-section>
+        SiLNt<br />
+        <small>
+          Created by:
+          <a
+            class="text-secondary"
+            target="_blank"
+            style="color: unset"
+            href="https://github.com/ponthief"
+            >Ponthief</a
+          >
+        </small>
+        <br />
+        <strong>Usage</strong><br />
+        1. Configure BlindBit Oracle URL and optional Mempool URL via the settings button (admin only)<br />
+        2. Add a Silent Payment wallet account using a 12-word BIP39 mnemonic<br />
+        3. Set the block height of your wallet's first transaction (born-at height)<br />
+        4. Optionally add a Human Readable Address (BIP353 email format — validated against SP address)<br />
+        5. Click the scan button on the wallet row to scan the blockchain for UTXOs<br />
+        6. Click the database button to load already-scanned UTXOs from the DB<br />
+        7. Wallet balance updates automatically after each scan (unspent UTXOs only)<br />
+        8. Use the Send button to build and broadcast a Bitcoin transaction<br />
+        9. Generate up to 10 labeled SP subaccount addresses per wallet<br />
+      </q-card-section>
+    </p>
+  </q-card>
+</q-expansion-item> -->
+
+<q-expansion-item
+  group="extras"
+  icon="api"
+  label="API info"
+  :content-inset-level="0.5"
+>
+  <q-btn flat label="Swagger API" type="a" href="../docs#/siLNt"></q-btn>
+
+  <!-- ── Wallets ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="List Wallet Accounts">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/wallet</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Query Parameters</h5>
+        <code>network=mainnet | testnet (default: mainnet)</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>[&lt;wallet_account_object&gt;, ...]</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/wallet -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Get Wallet Account">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/wallet/{wallet_id}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{wallet_account_object}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt; -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Create Wallet Account">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/wallet</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"mnemonic": &lt;encrypted_string&gt;, "title": &lt;string&gt;,
+          "hr_address": &lt;string&gt;, "last_height": &lt;string&gt;,
+          "network": "mainnet" | "testnet"}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>If hr_address is provided, it must resolve via BIP353 DNS to this wallet's SP address.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>""</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/wallet -H
+          "X-Api-Key: &lt;invoice_key&gt;" -H "Content-Type: application/json" -d
+          '{"mnemonic": "...", "last_height": "840000", "network": "mainnet"}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Update Wallet Account">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">PUT</span> /siLNt/api/v1/wallet/{wallet_id}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"hr_address": &lt;string&gt;, "last_height": &lt;string&gt;,
+          "title": &lt;string&gt;, "balance": &lt;integer&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>If hr_address is updated, it must resolve via BIP353 DNS to this wallet's SP address.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>""</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X PUT {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt; -H
+          "X-Api-Key: &lt;invoice_key&gt;" -H "Content-Type: application/json" -d
+          '{"hr_address": "alice@domain.com"}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Delete Wallet Account">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">DELETE</span> /siLNt/api/v1/wallet/{wallet_id}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>Also deletes all UTXOs and labeled SP addresses for this wallet.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 204 No Content</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X DELETE {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt; -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── Labeled SP Addresses ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="List Labeled SP Addresses">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/wallet/{wallet_id}/addresses</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"addresses": [&lt;address_object&gt;, ...], "max": 10}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/addresses -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Preview Labeled SP Address">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/wallet/{wallet_id}/addresses/preview</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code>{"label_index": &lt;integer&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>Derives a BIP352 labeled SP address without saving to DB. label_index starts at 1 (0 is reserved for change).</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"sp_address": &lt;string&gt;, "label_index": &lt;integer&gt;, "wallet_id": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/addresses/preview -H
+          "X-Api-Key: &lt;invoice_key&gt;" -H "Content-Type: application/json" -d
+          '{"label_index": 1}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Save Labeled SP Address">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/wallet/{wallet_id}/addresses</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code>{"sp_address": &lt;string&gt;, "label_index": &lt;integer&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>Persists a previously previewed labeled SP address to the DB. Maximum 10 per wallet.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"sp_address": &lt;string&gt;, "label_index": &lt;integer&gt;, "wallet_id": &lt;string&gt;, "id": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/addresses -H
+          "X-Api-Key: &lt;invoice_key&gt;" -H "Content-Type: application/json" -d
+          '{"sp_address": "sp1qq...", "label_index": 1}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Delete Labeled SP Address">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">DELETE</span> /siLNt/api/v1/wallet/{wallet_id}/addresses/{address_id}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 204 No Content</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X DELETE {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/addresses/&lt;address_id&gt; -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── Scanning ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Scan Wallet">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/wallet/{wallet_id}/scan</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code>{"from_height": &lt;integer&gt;, "to_height": &lt;integer&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"utxos_found": &lt;integer&gt;, "blocks_scanned": &lt;integer&gt;,
+          "final_height": &lt;integer&gt;, "balance": &lt;integer&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/scan -H
+          "X-Api-Key: &lt;invoice_key&gt;" -H "Content-Type: application/json" -d
+          '{"from_height": 840000, "to_height": 850000}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Stop Scan">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/wallet/{wallet_id}/scan/stop</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"status": "stop requested"}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/scan/stop -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Get Scan Progress">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/wallet/{wallet_id}/scan/progress</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"active": &lt;boolean&gt;, "current": &lt;integer&gt;,
+          "total": &lt;integer&gt;, "found": &lt;integer&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/wallet/&lt;wallet_id&gt;/scan/progress -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── UTXOs ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Get UTXOs from DB">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/utxos</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Query Parameters</h5>
+        <code>wallet_id=&lt;string&gt; (required)</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"utxos": [&lt;utxo_object&gt;, ...]}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET "{{ request.base_url }}siLNt/api/v1/utxos?wallet_id=&lt;wallet_id&gt;" -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── BlindBit Oracle ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Get BlindBit Oracle Config">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/backend/config</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"blindbit_url": &lt;string&gt;, "blindbit_user": &lt;string&gt;,
+          "blindbit_pass": &lt;string&gt;, "mempool_url": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/backend/config -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Update BlindBit Oracle Config">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">PUT</span> /siLNt/api/v1/backend/config</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"blindbit_url": &lt;string&gt;, "blindbit_user": &lt;string&gt;,
+          "blindbit_pass": &lt;string&gt;, "mempool_url": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>mempool_url defaults to https://mempool.space if not provided. Supports both http and https.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"blindbit_url": &lt;string&gt;, "blindbit_user": &lt;string&gt;,
+          "blindbit_pass": &lt;string&gt;, "mempool_url": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X PUT {{ request.base_url }}siLNt/api/v1/backend/config -H
+          "X-Api-Key: &lt;admin_key&gt;" -H "Content-Type: application/json" -d
+          '{"blindbit_url": "http://localhost:8001", "mempool_url": "http://localhost:8080"}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Get Oracle Chain Tip">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/oracle/tip</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"height": &lt;integer&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/oracle/tip -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── BIP353 ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Resolve BIP353 Address">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/bip353/resolve</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Query Parameters</h5>
+        <code>address=&lt;email_format&gt; e.g. alice@domain.com (required)</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"address": &lt;string&gt;, "dns_domain": &lt;string&gt;,
+          "result": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET "{{ request.base_url }}siLNt/api/v1/bip353/resolve?address=alice@domain.com"
+          -H "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── Transactions ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Build Transaction">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/tx/build</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"wallet_id": &lt;string&gt;, "recipient": &lt;string&gt;,
+          "amount": &lt;integer&gt;, "fee_rate": &lt;integer&gt;,
+          "memo": &lt;string&gt;, "utxos": [{"txid": &lt;string&gt;,
+          "amount": &lt;integer&gt;, "vout": &lt;integer&gt;,
+          "priv_key_tweak": &lt;string&gt;, "pub_key": &lt;string&gt;}]}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>recipient can be a Silent Payment address (sp1...), on-chain address, or BIP353 email address. BIP353 addresses are auto-resolved server-side.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"tx_hex": &lt;string&gt;, "fee": &lt;integer&gt;,
+          "amount": &lt;integer&gt;, "change": &lt;integer&gt;,
+          "total_input": &lt;integer&gt;, "recipient": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/tx/build -H
+          "X-Api-Key: &lt;admin_key&gt;" -H "Content-Type: application/json" -d
+          '{"wallet_id": "...", "recipient": "sp1qq...", "amount": 1000,
+          "fee_rate": 1, "utxos": [...]}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <q-expansion-item group="api" dense expand-separator label="Broadcast Transaction">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">POST</span> /siLNt/api/v1/tx/broadcast</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"tx_hex": &lt;string&gt;, "wallet_id": &lt;string&gt;,
+          "spent_txids": [&lt;string&gt;, ...]}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>Broadcasts to configured Mempool URL. spent_txids are marked as unconfirmed_spent in the DB.</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code>{"txid": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.base_url }}siLNt/api/v1/tx/broadcast -H
+          "X-Api-Key: &lt;admin_key&gt;" -H "Content-Type: application/json" -d
+          '{"tx_hex": "0200000001...", "wallet_id": "...", "spent_txids": ["..."]}'
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+  <!-- ── App Config ── -->
+
+  <q-expansion-item group="api" dense expand-separator label="Get App Config">
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /siLNt/api/v1/config</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Notes</h5>
+        <code>Returns mempool_endpoint from BlindBit config (falls back to https://mempool.space).</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 200 OK (application/json)</h5>
+        <code
+          >{"mempool_endpoint": &lt;string&gt;, "sats_denominated": &lt;boolean&gt;,
+          "network": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.base_url }}siLNt/api/v1/config -H
+          "X-Api-Key: &lt;invoice_key&gt;"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+
+</q-expansion-item>
