@@ -1,9 +1,9 @@
 {
   "name": "Build your own!",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "short_description": "Extension building guide",
   "tile": "/example/static/bitcoin-extension.png",
-  "min_lnbits_version": "1.7.0",
+  "min_lnbits_version": "1.7.0-rc1",
   "donate": "donate@legend.lnbits.com",
   "contributors": [
     {
